@@ -22,7 +22,14 @@
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "notification": {
+        "icon": "./assets/logo192.png",
+        "color": "#ffffff",
+        "androidMode": "default",
+        "androidCollapsedTitle": "Robine Intranet",
+        "vapidPublicKey": "BNaMdZ_77dwgy2T6Oiciuxpt-HjXPLYE_cyoQ67I-fGqcVNo7xehTXoX7nxkHF-jfFU1bU0_zSkId-a-mDihFD8"
+      }
     }
   }
 }
