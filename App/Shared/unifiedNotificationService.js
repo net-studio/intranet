@@ -54,18 +54,26 @@ const unifiedNotificationService = {
           .catch((err) => console.log('FCM listener error in app: ', err));
 
         return true; // Ensure this is returned for the web platform path
-      } else {
-        // // Configurer Expo Notifications pour les mobiles
-        // Notifications.setNotificationHandler({
-        //   handleNotification: async () => ({
-        //     shouldShowAlert: true,
-        //     shouldPlaySound: true,
-        //     shouldSetBadge: true,
-        //   }),
-        // });
+      } else { // Mobile platform (iOS, Android)
+        // Configurer Expo Notifications pour les mobiles
+        Notifications.setNotificationHandler({
+          handleNotification: async () => ({
+            shouldShowAlert: true,
+            shouldPlaySound: true,
+            shouldSetBadge: true,
+          }),
+        });
 
-        // // Pour mobile, on peut appeler registerForPushNotifications ici
-        // await unifiedNotificationService.registerForPushNotifications();
+        // The following lines were also in the original commented code.
+        // Let's consider if they are necessary here or handled elsewhere (e.g., by useUnifiedNotifications hook).
+        // The useUnifiedNotifications hook already calls registerForPushNotifications via its own initializeNotifications -> unifiedNotificationService.registerForPushNotifications.
+        // So, calling it again here in initialize() might be redundant or even problematic if not handled carefully.
+        // For now, focus on reinstating setNotificationHandler.
+        // If registerForPushNotifications is indeed needed here, it should be reviewed for idempotency.
+        // Based on current structure, it's better called from the hook after permissions.
+        // await unifiedNotificationService.registerForPushNotifications(); // KEEP THIS COMMENTED for now unless proven necessary
+
+        console.log('UnifiedNotificationService: Expo notification handler set for mobile.');
         return true;
       }
     } catch (error) {
