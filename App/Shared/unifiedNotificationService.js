@@ -27,31 +27,33 @@ const unifiedNotificationService = {
           await unifiedNotificationService.registerTokenWithServer(fcmToken, 'web');
         }
 
-        // // Configurer l'écouteur pour les messages FCM
-        // onMessageListener()
-        //   .then((payload) => {
-        //     if ('serviceWorker' in navigator && 'ServiceWorkerRegistration' in window) {
-        //       navigator.serviceWorker.ready.then((registration) => {
-        //         registration.showNotification(
-        //           payload?.notification?.title + ' Unified' || 'Notification',
-        //           {
-        //             body: payload?.notification?.body || '',
-        //             icon: './logo192.png'
-        //           }
-        //         );
-        //       });
-        //     } else {
-        //       // Fallback pour les navigateurs qui ne supportent pas les service workers
-        //       if ('Notification' in window && Notification.permission === 'granted') {
-        //         new Notification(payload?.notification?.title + ' Unified' || 'Notification', {
-        //           body: payload?.notification?.body || '',
-        //         });
-        //       }
-        //     }
-        //   })
-        //   .catch((err) => console.log('FCM listener error: ', err));
+        // Configurer l'écouteur pour les messages FCM foreground
+        onMessageListener()
+          .then((payload) => {
+            console.log('Foreground FCM received by app:', payload);
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+              // Send to service worker to handle display
+              navigator.serviceWorker.controller.postMessage({
+                type: 'FOREGROUND_FCM_RECEIVED', // New message type
+                payload: payload
+              });
+            } else {
+              // Fallback if service worker isn't active/controlling, though unlikely with FCM setup
+              // This path might still lead to duplicates if not careful, but primary path is SW.
+              console.warn('Service worker not active. Foreground FCM might not be displayed consistently.');
+              // As a last resort, and if no SW, uncommenting below would show a direct notification
+              // but the goal is to centralize in SW.
+              // if ('Notification' in window && Notification.permission === 'granted') {
+              //   new Notification(payload?.notification?.title || 'Notification', {
+              //     body: payload?.notification?.body || '',
+              //     tag: payload?.notification?.tag || undefined // Pass tag if available
+              //   });
+              // }
+            }
+          })
+          .catch((err) => console.log('FCM listener error in app: ', err));
 
-        // return true;
+        return true; // Ensure this is returned for the web platform path
       } else {
         // // Configurer Expo Notifications pour les mobiles
         // Notifications.setNotificationHandler({
@@ -253,31 +255,29 @@ const unifiedNotificationService = {
    * @returns {Function} - Fonction pour annuler les abonnements
    */
   setupNotificationListeners: (onNotificationReceived, onNotificationResponse) => {
-    // if (Platform.OS === 'web') {
-    //   // Pour le web, utiliser l'écouteur FCM
-    //   const fcmListener = onMessageListener()
-    //     .then((payload) => {
-    //       if (onNotificationReceived) {
-    //         console.log("onNotificationReceived");
-    //         onNotificationReceived(payload);
-    //       }
-    //     })
-    //     .catch((err) => console.log('FCM listener error in setup: ', err));
+    if (Platform.OS === 'web') {
+      // Listener for FCM foreground messages is now in initialize().
+      // This listener is for notification CLICKS relayed from the service worker.
+      const swMessageListener = (event) => {
+        if (event.data && event.data.type === 'NOTIFICATION_CLICK' && onNotificationResponse) {
+          console.log('App received NOTIFICATION_CLICK from SW:', event.data);
+          onNotificationResponse(event.data);
+        }
+      };
 
-    //   // Écouter les clics sur les notifications web
-    //   if ('serviceWorker' in navigator) {
-    //     navigator.serviceWorker.addEventListener('message', (event) => {
-    //       if (event.data.type === 'NOTIFICATION_CLICK' && onNotificationResponse) {
-    //         onNotificationResponse(event.data);
-    //       }
-    //     });
-    //   }
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('message', swMessageListener);
+      }
 
-      // Retourne une fonction vide pour la compatibilité avec la version mobile
-      return () => { };
-    // } else {
-    //   // Pour mobile, utiliser les écouteurs Expo
-    //   const receivedSubscription = Notifications.addNotificationReceivedListener(
+      // Return a cleanup function
+      return () => {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.removeEventListener('message', swMessageListener);
+        }
+      };
+    } else {
+      // Mobile listeners remain unchanged
+      const receivedSubscription = Notifications.addNotificationReceivedListener(
     //     notification => {
     //       if (onNotificationReceived) {
     //         onNotificationReceived(notification);

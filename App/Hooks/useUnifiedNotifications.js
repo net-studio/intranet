@@ -225,13 +225,15 @@ export const useUnifiedNotifications = () => {
 
   // Configurer les notifications au montage du composant
   useEffect(() => {
-    initializeNotifications();
-    
-    // // Configurer les écouteurs de notifications
-    // const unsubscribe = unifiedNotificationService.setupNotificationListeners(
-    //   handleNotificationReceived,
-    //   handleNotificationResponse
-    // );
+    // initializeNotifications(); // This is ALREADY CALLED in its own useEffect. No need to call again.
+
+    // Configurer les écouteurs de notifications
+    // This will now correctly set up mobile listeners, and for web,
+    // the NOTIFICATION_CLICK listener from the service worker.
+    const unsubscribe = unifiedNotificationService.setupNotificationListeners(
+      handleNotificationReceived, // For in-app UI updates (e.g., badge, list)
+      handleNotificationResponse  // For handling clicks
+    );
     
     // Nettoyage à la destruction du composant
     return () => {
@@ -239,7 +241,11 @@ export const useUnifiedNotifications = () => {
         unsubscribe();
       }
     };
-  }, [initializeNotifications, handleNotificationReceived, handleNotificationResponse]);
+    // Ensure dependencies are correct. `initializeNotifications` is not directly used here,
+    // but its action (calling unifiedNotificationService.initialize) is a prerequisite.
+    // The direct dependencies are the callbacks.
+  }, [handleNotificationReceived, handleNotificationResponse]);
+  // Removed initializeNotifications from deps array as it's in its own effect.
 
   // Mettre à jour le compteur de notifications périodiquement (toutes les 30 secondes)
   useEffect(() => {

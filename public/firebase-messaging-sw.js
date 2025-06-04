@@ -25,10 +25,18 @@ const displayedNotifications = new Set();
 
 // Fonction utilitaire pour créer un ID unique de notification
 function createNotificationId(payload) {
-  const timestamp = Date.now();
-  const title = payload.notification?.title + ' FCM' || 'notification';
-  const body = payload.notification?.body || '';
-  return payload.notification?.tag || `${title}-${body.substring(0, 20)}-${timestamp}`;
+  // Use a fixed prefix to ensure it's a valid tag format if we only use title/body
+  const prefix = 'fcm-';
+  if (payload.notification?.tag) {
+    return prefix + payload.notification.tag;
+  }
+  // If no server-provided tag, create a more stable ID based on content.
+  // This is a simple heuristic. A more robust approach might involve hashing.
+  const title = payload.notification?.title || 'Untitled';
+  const body = payload.notification?.body || 'No body';
+  // Use a combination of title and the first 50 chars of body.
+  // Avoid using timestamps here for better deduplication of the same content.
+  return `${prefix}${title}-${body.substring(0, 50)}`;
 }
 
 // Fonction utilitaire pour afficher une notification
@@ -88,47 +96,37 @@ messaging.onBackgroundMessage((payload) => {
 self.addEventListener('message', (event) => {
   console.log('Message reçu dans le service worker:', event.data);
 
-  if (event.data && event.data.type === 'FOREGROUND_NOTIFICATION') {
+  if (event.data && event.data.type === 'FOREGROUND_FCM_RECEIVED') { // Updated message type
     const payload = event.data.payload;
+
+    // Use the (now improved) createNotificationId function
     const notificationId = createNotificationId(payload);
 
-    const notificationTitle = payload.notification?.title + ' SW FG' || 'Notification';
+    // Construct title and options similar to onBackgroundMessage,
+    // ensuring consistency if possible.
+    const notificationTitle = payload.notification?.title || 'Notification';
     const notificationOptions = {
       body: payload.notification?.body || '',
-      icon: payload.notification?.icon || '/logo192.png',
-      badge: payload.notification?.badge || '/logo192.png',
-      tag: notificationId,
+      icon: payload.notification?.icon || '/logo192.png', // Ensure this path is correct
+      badge: payload.notification?.badge || '/logo192.png', // Ensure this path is correct
+      tag: notificationId, // Crucial for deduplication and replacement
       data: {
-        ...payload.data,
-        source: 'foreground',
+        ...(payload.data || {}), // Spread any data from FCM payload
+        source: 'foreground-via-app', // Indicate source for debugging if needed
         timestamp: Date.now()
       },
       requireInteraction: payload.notification?.requireInteraction || false,
-      renotify: false,
+      renotify: payload.notification?.renotify === undefined ? false : payload.notification.renotify, // Default renotify to false
       silent: payload.notification?.silent || false,
       actions: payload.notification?.actions || []
     };
 
-    // Vérifier si l'onglet est visible avant d'afficher la notification
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
-      let isTabVisible = false;
-
-      windowClients.forEach(client => {
-        if (client.visibilityState === 'visible' &&
-          client.url.startsWith(self.location.origin)) {
-          isTabVisible = true;
-        }
-      });
-
-      // Afficher la notification même si l'onglet est visible (comportement personnalisable)
-      // Vous pouvez modifier cette logique selon vos besoins
-      if (event.data.forceShow || !isTabVisible) {
-        showNotificationIfNotDuplicate(notificationTitle, notificationOptions, notificationId);
-      } else {
-        console.log('Onglet visible, notification foreground ignorée');
-      }
-    });
+    // Display the notification using the deduplication logic
+    showNotificationIfNotDuplicate(notificationTitle, notificationOptions, notificationId);
   }
+  // Keep other message type handlers if any (e.g., for NOTIFICATION_CLICK, though that's handled by a different event listener 'notificationclick')
+  // No, NOTIFICATION_CLICK is a separate event 'notificationclick', not a message type here.
+  // So, this 'message' listener is primarily for app-to-SW communication.
 });
 
 // Notification click handling
