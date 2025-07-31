@@ -278,27 +278,27 @@ const unifiedNotificationService = {
     } else {
       // Mobile listeners remain unchanged
       const receivedSubscription = Notifications.addNotificationReceivedListener(
-    //     notification => {
-    //       if (onNotificationReceived) {
-    //         onNotificationReceived(notification);
-    //       }
-    //     }
-    //   );
+        notification => {
+          if (onNotificationReceived) {
+            onNotificationReceived(notification);
+          }
+        }
+      );
 
-    //   const responseSubscription = Notifications.addNotificationResponseReceivedListener(
-    //     response => {
-    //       if (onNotificationResponse) {
-    //         onNotificationResponse(response);
-    //       }
-    //     }
-    //   );
+      const responseSubscription = Notifications.addNotificationResponseReceivedListener(
+        response => {
+          if (onNotificationResponse) {
+            onNotificationResponse(response);
+          }
+        }
+      );
 
-    //   // Retourne une fonction pour annuler les abonnements
-    //   return () => {
-    //     receivedSubscription.remove();
-    //     responseSubscription.remove();
-    //   };
-    // }
+      // Retourne une fonction pour annuler les abonnements
+      return () => {
+        receivedSubscription.remove();
+        responseSubscription.remove();
+      };
+    }
   },
 
   /**
