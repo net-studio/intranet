@@ -75,8 +75,8 @@ export default function Dashboard() {
                         resizeMode="contain"
                     />
                     <View style={styles.titleContainer}>
-                        <Text style={styles.subTitle}>Intranet</Text>
-                        <Text style={styles.title}>Robine Énergies</Text>
+                        <Text style={styles.subTitle}>Tableau de bord</Text>
+                        <Text style={styles.title}>Intranet d'Entreprise</Text>
 
                     </View>
                 </View>
@@ -89,6 +89,90 @@ export default function Dashboard() {
 
                         {/* Documents récents et notifications */}
                         <View style={styles.row}>
+                            <StatCard
+                                title="Documents"
+                                count={recentDocs.length || 0}
+                                icon="document"
+                                color={Colors.primary}
+                                onPress={() => navigation.navigate('docs')}
+                            />
+                            <StatCard
+                                title="Notifications"
+                                count={notificationCount || 0}
+                                icon="notifications"
+                                color={Colors.secondary}
+                                onPress={() => navigation.navigate('Notifications')}
+                            />
+                        </View>
+
+                        {/* Événements à venir */}
+                        <View style={styles.row}>
+                            <TouchableOpacity
+                                style={styles.eventCard}
+                                onPress={() => navigation.navigate('chat')}
+                            >
+                                <View style={styles.eventIconContainer}>
+                                    <Icon name="chatbubble-outline" size={24} color={Colors.secondary} />
+                                </View>
+                                <Text style={styles.eventTitle}>Messages</Text>
+                                <Text style={styles.eventSubtitle}>{`${unreadMessages.length} non lus`}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.eventCard}
+                                onPress={() => navigation.navigate('Settings')}
+                            >
+                                <View style={styles.eventIconContainer}>
+                                    <Icon name="settings-outline" size={24} color={Colors.secondary} />
+                                </View>
+                                <Text style={styles.eventTitle}>Paramètres</Text>
+                                <Text style={styles.eventSubtitle}>Configuration & Réglages</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <TouchableOpacity
+                            style={styles.infoLarge}
+                            onPress={() => navigation.navigate('actualites')}
+                        >
+                            <View>
+                                <View style={styles.eventIconContainer}>
+                                    <Icon name="newspaper" size={24} color={Colors.secondary} />
+                                </View>
+                                <Text style={styles.eventTitle}>Actualités</Text>
+                                <Text style={styles.eventSubtitle}>{actus.length || 0} actus</Text>
+                            </View>
+                            <View>
+                                <Text>{lastActu[0]?.titre}</Text>
+                                {lastActu[0]?.images[0]?.url !== undefined ?
+                                    <Image
+                                        source={{ uri: GlobalApi.API_URL + lastActu[0]?.images[0]?.url }}
+                                        style={{ position: 'absolute', borderRadius: 5, display: 'block', width: '100%', height: '100%' }}
+                                    />
+                                    : null}
+                            </View>
+                        </TouchableOpacity>
+
+                        {/* Agenda & RH */}
+                        <View style={[styles.row, { paddingBottom: 16 }]}>
+                            {/* <TouchableOpacity
+                                style={styles.eventCard}
+                                onPress={() => navigation.navigate('agenda')}
+                            >
+                                <View style={styles.eventIconContainer}>
+                                    <Icon name="people" size={24} color={Colors.secondary} />
+                                </View>
+                                <Text style={styles.eventTitle}>Evènements</Text>
+                                <Text style={styles.eventSubtitle}>5 upcoming</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.eventCard}
+                                onPress={() => navigation.navigate('agenda')}
+                            >
+                                <View style={styles.eventIconContainer}>
+                                    <Icon name="calendar" size={24} color={Colors.secondary} />
+                                </View>
+                                <Text style={styles.eventTitle}>A venir</Text>
+                                <Text style={styles.eventSubtitle}>3 upcoming</Text>
+                            </TouchableOpacity> */}
                             <TouchableOpacity
                                 style={[styles.eventCard, { backgroundColor: Colors.primary }]}
                                 onPress={() => navigation.navigate('agenda')}
@@ -101,50 +185,17 @@ export default function Dashboard() {
                                     15 meetings
                                 </Text>
                             </TouchableOpacity>
-                            <StatCard
-                                title="Notifications"
-                                count={notificationCount || 0}
-                                icon="notifications"
-                                color={Colors.secondary}
-                                onPress={() => navigation.navigate('Notifications')}
-                            />
-                        </View>
-
-                        <TouchableOpacity
-                            style={styles.infoLarge}
-                            onPress={() => navigation.navigate('actualites')}
-                        >
-                            <View>
-                                <View style={styles.eventIconContainer}>
-                                    <Icon name="newspaper" size={24} color={Colors.secondary} />
-                                </View>
-                                <View style={{flex:1, flexDirection:'row', gap: '0.5rem'}}>
-                                    <Text style={styles.eventTitle}>Actualités</Text>
-                                    <Text style={styles.eventSubtitle}>({actus.length || 0} actus)</Text>
-                                </View>
-                            </View>
-                            <View style={{ flexGrow: 1 }}>
-                                <Text>{lastActu[0]?.titre}</Text>
-                                {lastActu[0]?.images[0]?.url !== undefined ?
-                                    <Image
-                                        source={{ uri: GlobalApi.API_URL + lastActu[0]?.images[0]?.url }}
-                                        style={{ position: 'absolute', borderRadius: 5, display: 'block', width: '100%', height: '100%' }}
-                                    />
-                                    : null}
-                            </View>
-                        </TouchableOpacity>
-
-                        {/* Événements à venir */}
-                        <View style={styles.parametres}>
                             <TouchableOpacity
-                                style={styles.eventCard}
-                                onPress={() => navigation.navigate('Settings')}
+                                style={[styles.eventCard, { backgroundColor: Colors.darkBackground }]}
+                                onPress={() => navigation.navigate('rh')}
                             >
-                                <View style={styles.eventIconContainer}>
-                                    <Icon name="settings-outline" size={24} color={Colors.secondary} />
+                                <View style={[styles.eventIconContainer, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                                    <Icon name="briefcase" size={24} color={Colors.white} />
                                 </View>
-                                <Text style={styles.eventTitle}>Paramètres</Text>
-                                <Text style={styles.eventSubtitle}>Configuration & Réglages</Text>
+                                <Text style={[styles.eventTitle, { color: Colors.white }]}>Infos RH</Text>
+                                <Text style={[styles.eventSubtitle, { color: 'rgba(255,255,255,0.8)' }]}>
+                                    Actualités & Annonces
+                                </Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -173,23 +224,14 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'space-between',
-        // flexGrow: 1,
-    },
-    parametres: {
-        padding: 16,
-        borderRadius: 8,
-        backgroundColor: Colors.white,
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        // flexGrow: 1,
+        flexGrow: 1,
     },
     infoLarge: {
         padding: 16,
         borderRadius: 8,
         backgroundColor: Colors.white,
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: 'row',
         justifyContent: 'space-between',
         flexGrow: 1,
     },

@@ -82,11 +82,10 @@ export const COLORS = {
   // Styles neumorphiques (comme sur vos maquettes)
   export const NEUMORPHISM = {
     light: {
-      // shadowColor: COLORS.shadow,
-      // shadowOffset: { width: 5, height: 5 },
-      // shadowOpacity: 0.15,
-      // shadowRadius: 10,
-      boxShadow: '5, 5, 10, rgba(0, 0, 0, 0.15)',
+      shadowColor: COLORS.shadow,
+      shadowOffset: { width: 5, height: 5 },
+      shadowOpacity: 0.15,
+      shadowRadius: 10,
       elevation: 8,
       backgroundColor: COLORS.white,
       borderRadius: SIZES.md,

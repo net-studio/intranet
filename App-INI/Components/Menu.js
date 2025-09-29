@@ -27,11 +27,17 @@ export default function Menu() {
     const onPressAgenda = () => {
         navigation.navigate('agenda');
     }
-    const onPressSettings = () => {
-        navigation.navigate('Settings');
+    const onPressChat = () => {
+        navigation.navigate('chat');
     }
-    const onPressNotifications = () => {
-        navigation.navigate('Notifications');
+    const onPressDocs = () => {
+        navigation.navigate('docs');
+    }
+    const onPressRH = () => {
+        navigation.navigate('rh');
+    }
+    const onPressAdmin = () => {
+        navigation.navigate('admin');
     }
     
     return (
@@ -48,17 +54,25 @@ export default function Menu() {
                 <Ionicons name="newspaper-outline" size={24} color={path == 'actualites' ? Colors.robine : 'black'} style={styles.nav} />
                 <Text style={styles.small}>Actus</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => onPressAgenda()} style={styles.icontext}>
+            {/* <TouchableOpacity onPress={() => onPressAgenda()} style={styles.icontext}>
                 <Ionicons name="calendar-number-outline" size={24} color={path == 'agenda' ? Colors.robine : 'black'} style={styles.nav} />
                 <Text style={styles.small}>Agenda</Text>
+            </TouchableOpacity> */}
+            <TouchableOpacity onPress={() => onPressAdmin()} style={styles.icontext}>
+                <Ionicons name="grid-outline" size={24} color={path == 'admin' ? Colors.robine : 'black'} style={styles.nav} />
+                <Text style={styles.small}>Admin</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => onPressNotifications()} style={styles.icontext}>
-                <Ionicons name="notifications-outline" size={24} color={path == 'Notifications' ? Colors.robine : 'black'} style={styles.nav} />
-                <Text style={styles.small}>Notifs</Text>
+            <TouchableOpacity onPress={() => onPressChat()} style={styles.icontext}>
+                <Ionicons name="chatbox-outline" size={24} color={path == 'chat' ? Colors.robine : 'black'} style={styles.nav} />
+                <Text style={styles.small}>Chat</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => onPressSettings()} style={styles.icontext}>
-                <Ionicons name="settings-outline" size={24} color={path == 'Settings' ? Colors.robine : 'black'} style={styles.nav} />
-                <Text style={styles.small}>Config</Text>
+            <TouchableOpacity onPress={() => onPressDocs()} style={styles.icontext}>
+                <Ionicons name="document-text-outline" size={24} color={path == 'docs' ? Colors.robine : 'black'} style={styles.nav} />
+                <Text style={styles.small}>Docs</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => onPressRH()} style={styles.icontext}>
+                <Ionicons name="briefcase-outline" size={24} color={path == 'rh' ? Colors.robine : 'black'} style={styles.nav} />
+                <Text style={styles.small}>RH</Text>
             </TouchableOpacity>
         </View>
     )
