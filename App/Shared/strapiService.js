@@ -3,8 +3,8 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Configuration de l'URL de base de l'API Strapi
-export const API_URL = 'https://robine-api.net-studio.fr';
-// export const API_URL = "http://localhost:1341";
+// export const API_URL = 'https://robine-api.net-studio.fr';
+export const API_URL = "http://localhost:1341";
 
 // Créer une instance Axios avec configuration de base
 export const api = axios.create({

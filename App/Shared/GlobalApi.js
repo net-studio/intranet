@@ -42,8 +42,11 @@ const updateNotification = (documentId, data) => api.put(`/notifications/${docum
 const testNotification = (data) => api.post(`/notifications/test`, data);
 const markAllAsRead = (data) => api.put(`/notifications/mark-all-read`, data);
 const deleteNotification = (documentId) => api.delete(`/notifications/${documentId}`);
+const getEvents = (userId) => api.get(`/events?filters[$or][0][participants][id][$in]=${userId}&filters[$or][1][isPublic][$eq]=true&sort[0]=startDate:asc&populate[organizer][fields][0]=*&populate[participants][fields][0]=*&populate[location][fields][0]=*`);
+const setEventResponse = (data) => api.post('/event-responses', data);
 
 export default {
+  api,
   API_URL,
   getLogin,
   getCollaborateur,
@@ -67,5 +70,7 @@ export default {
   updateNotification,
   testNotification,
   markAllAsRead,
-  deleteNotification
+  deleteNotification,
+  getEvents,
+  setEventResponse
 }

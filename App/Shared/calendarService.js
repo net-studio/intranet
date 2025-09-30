@@ -16,32 +16,71 @@ export const fetchEvents = async (startDate = null, endDate = null) => {
     const userId = collaborateurs[0].id;
     console.log("userId : ", userId);
 
-    let queryParams = `filters[$or][0][participants][user][id]=${userId}&filters[$or][1][isPublic][$eq]=true&sort=startDate:asc&populate=organizer,participants.user`;
+    // let queryParams = `filters[$or][0][participants][user][id]=${userId}&filters[$or][1][isPublic][$eq]=true&sort=startDate:asc&populate=organizer,participants.user`;
+    // if (startDate) {
+    //   queryParams += `&filters[startDate][$gte]=${startDate}`;
+    // }
+    // if (endDate) {
+    //   queryParams += `&filters[endDate][$lte]=${endDate}`;
+    // }
+    // console.log('queryParams', queryParams);
+    // const response = await api.get(`/api/events?${queryParams}`);
+    // const events = response.data.data;
 
-    if (startDate) {
-      queryParams += `&filters[startDate][$gte]=${startDate}`;
-    }
-
-    if (endDate) {
-      queryParams += `&filters[endDate][$lte]=${endDate}`;
-    }
-    console.log('queryParams', queryParams);
-    const response = await api.get(`/api/events?${queryParams}`);
+    // const query = qs.stringify({
+    //   filters: {
+    //     $or: [
+    //       {
+    //         participants: {
+    //           id: {
+    //             $in: [userId]
+    //           }
+    //         }
+    //       },
+    //       {
+    //         isPublic: {
+    //           $eq: true
+    //         }
+    //       }
+    //     ]
+    //   },
+    //   sort: ['startDate:asc'],
+    //   populate: {
+    //     organizer: {
+    //       fields: ['*']
+    //     },
+    //     participants: {
+    //       fields: ['*']
+    //     },
+    //     location: {
+    //       fields: ['*']
+    //     }
+    //   }
+    // }, {
+    //   encodeValuesOnly: true
+    // });
+    // console.log('query : ', query);
+    // const response = await api.get(`/api/events?${query}`);
+    // const events = response.data.data;
+    const response = await GlobalApi.getEvents(userId);
     const events = response.data.data;
 
     // Récupérer les réponses de l'utilisateur pour ces événements
-    const eventIds = events.map(event => event.id);
-    const responseParams = `filters[event][id][$in]=${eventIds.join(',')}&filters[user][id]=${userId}`;
-    const responseData = await api.get(`/api/event-responses?${responseParams}`);
+    const eventIds = events.map(event => event.documentId);
+    console.log('eventIds : ', eventIds);
+
+    const responseParams = `filters[event][documentId][$in]=${eventIds.join(',')}&filters[collaborateur][id]=${userId}`;
+    const responseData = await GlobalApi.api.get(`/event-responses?${responseParams}`);
     const userResponses = responseData.data.data;
 
+    console.log('userResponses : ', userResponses);
     // Créer un mapping des réponses par événement
     const responseMap = {};
     userResponses.forEach(resp => {
-      responseMap[resp.attributes.event.data.id] = resp.attributes.response;
+      responseMap[resp.documentId] = resp.response;
     });
 
-    return events.map(event => formatEvent(event, responseMap[event.id] || null));
+    return events.map(event => formatEvent(event, responseMap[event.documentId] || null));
   } catch (error) {
     console.error('Erreur lors de la récupération des événements:', error);
     throw error;
