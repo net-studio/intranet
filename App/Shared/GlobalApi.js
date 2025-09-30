@@ -1,7 +1,7 @@
 import { create } from 'apisauce'
 
-const API_URL = 'https://robine-api.net-studio.fr';
-// const API_URL = "http://localhost:1341";
+// const API_URL = 'https://robine-api.net-studio.fr';
+const API_URL = "http://localhost:1341";
 
 const api = create({
   baseURL: API_URL + "/api",
@@ -12,6 +12,7 @@ const api = create({
 
 const getLogin = (email) => api.get(`/collaborateurs?fields[0]=id&fields[1]=prenom&fields[2]=nom&fields[3]=telephone&fields[4]=email&fields[5]=password&fields[6]=documentId&populate[0]=photo&filters[email][$eq]=${email}`);
 const getCollaborateur = (p) => api.get(`/collaborateurs?populate=*&sort[0]=prenom&sort[1]=nom&pagination[page]=${p}&pagination[pageSize]=25`);
+const getAgences = (p) => api.get(`/agences?fields[0]=id&fields[1]=label&sort=label:ASC&pagination[page]=${p}&pagination[pageSize]=25`);
 const getActualites = (p) => api.get(`/events?populate=*&sort=position:ASC&pagination[page]=${p}&pagination[pageSize]=25`);
 const getLastActualite = () => api.get(`/events?populate=*&sort=position:ASC&pagination[page]=1&pagination[pageSize]=1`);
 const getMessages = (p, pSize) => api.get(`/messages?sort=createdAt:ASC&pagination[page]=${p}&pagination[pageSize]=${pSize}&populate[0]=sent_by&populate[1]=attachments`);
@@ -46,6 +47,7 @@ export default {
   API_URL,
   getLogin,
   getCollaborateur,
+  getAgences,
   getActualites,
   getLastActualite,
   getMessages,
