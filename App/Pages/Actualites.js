@@ -21,7 +21,7 @@ export default function Actualites() {
             texte: item.texte,
             images: item.medias,
             position: item.position,
-            startdate: item.startdate,
+            startdate: item.startDate,
             createdAt: item.createdAt,
         }))
         while (p < result.meta.pagination.pageCount) {
@@ -35,7 +35,7 @@ export default function Actualites() {
                 texte: item.texte,
                 images: item.medias,
                 position: item.position,
-                startdate: item.startdate,
+                startdate: item.startDate,
                 createdAt: item.createdAt,
             }));
             resp.push(...tmp);

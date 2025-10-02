@@ -6,20 +6,18 @@ import {
   TouchableOpacity,
   FlatList,
   SafeAreaView,
-  StatusBar,
   ScrollView
-} from 'react-native'
+} from 'react-native';
 import Menu from '../Components/Menu';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import WelcomeHeader from '../Components/WelcomeHeader';
 import Colors from '../Shared/Colors';
-import { COLORS, FONTS, SIZES, NEUMORPHISM } from '../Shared/Theme';
 import { fetchEvents, respondToEvent } from '../Shared/calendarService';
 
-import CalendarStrip from '../Components/CalendarStrip';
 import EventCard from '../Components/EventCard';
 import RSVPButton from '../Components/RSVPButton';
+import MonthlyCalendar from '../Components/MonthlyCalendar';
 
 export default function Agenda() {
   const navigation = useNavigation();
@@ -50,7 +48,6 @@ export default function Agenda() {
       setLoading(true);
       const data = await fetchEvents();
       setEvents(data);
-      filterEventsByDate();
     } catch (error) {
       console.error('Erreur lors du chargement des événements:', error);
     } finally {
@@ -88,8 +85,26 @@ export default function Agenda() {
     }
   };
 
+  // Gestionnaire de sélection de date depuis le calendrier
+  const handleDateSelect = (date) => {
+    setSelectedDate(date);
+  };
+
+  // Aller à aujourd'hui
+  const goToToday = () => {
+    setSelectedDate(new Date());
+  };
+
   // Rendu pour chaque section d'événements
   const renderEventList = () => {
+    if (loading) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>Chargement...</Text>
+        </View>
+      );
+    }
+
     if (filteredEvents.length === 0) {
       return (
         <View style={styles.emptyContainer}>
@@ -113,6 +128,7 @@ export default function Agenda() {
           />
         )}
         contentContainerStyle={styles.eventList}
+        scrollEnabled={false}
       />
     );
   };
@@ -134,7 +150,12 @@ export default function Agenda() {
               <View style={styles.rsvpInfo}>
                 <Text style={styles.rsvpTitle}>{event.title}</Text>
                 <Text style={styles.rsvpDate}>
-                  {new Date(event.startDate).toLocaleDateString()}
+                  {new Date(event.startDate).toLocaleDateString('fr-FR', {
+                    day: 'numeric',
+                    month: 'long',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
                 </Text>
               </View>
               <View style={styles.rsvpActions}>
@@ -154,40 +175,6 @@ export default function Agenda() {
     );
   };
 
-  // Rendu des participants
-  const renderParticipants = () => {
-    // Simuler des données de participants
-    const participants = [
-      { id: 1, initials: 'JD', name: 'John Doe' },
-      { id: 2, initials: 'AM', name: 'Alice Miller' },
-      { id: 3, initials: 'TS', name: 'Tom Smith' },
-      { id: 4, initials: 'LB', name: 'Lisa Brown' },
-      { id: 5, initials: 'RW', name: 'Robert Wilson' },
-    ];
-
-    return (
-      <View style={styles.participantsContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {participants.map(participant => (
-            <TouchableOpacity
-              key={participant.id}
-              style={styles.participantCircle}
-            >
-              <Text style={styles.participantInitials}>
-                {participant.initials}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-    );
-  };
-
-  // Afficher les détails d'un événement
-  const navigateToEventDetails = (event) => {
-    navigation.navigate('EventDetails', { event });
-  };
-
   // Créer un nouvel événement
   const navigateToCreateEvent = () => {
     navigation.navigate('CreateEvent');
@@ -200,12 +187,11 @@ export default function Agenda() {
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <Text style={styles.headerTitle}>Agenda</Text>
-          <Text style={styles.headerComing}>(coming soon !)</Text>
           <TouchableOpacity
             style={styles.addButton}
             onPress={navigateToCreateEvent}
           >
-            <Icon name="add" size={24} color={Colors.black} />
+            <Icon name="add" size={24} color={Colors.white} />
           </TouchableOpacity>
         </View>
 
@@ -218,16 +204,19 @@ export default function Agenda() {
               year: 'numeric'
             })}
           </Text>
-          <TouchableOpacity style={styles.todayButton}>
-            <Text style={styles.todayButtonText}>Today</Text>
+          <TouchableOpacity style={styles.todayButton} onPress={goToToday}>
+            <Text style={styles.todayButtonText}>Aujourd'hui</Text>
           </TouchableOpacity>
         </View>
 
-        <CalendarStrip
+        {/* Calendrier mensuel avec sélection de date */}
+        <MonthlyCalendar 
+          events={events} 
           selectedDate={selectedDate}
-          onDateSelected={setSelectedDate}
+          onDateSelect={handleDateSelect}
         />
       </View>
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -262,61 +251,70 @@ export default function Agenda() {
 
         {activeTab === 'meetings' ? (
           <>
-            <Text style={styles.sectionTitle}>Rendez-vous</Text>
-            {renderEventList()}
+            <View style={styles.eventSection}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>
+                  Événements du {selectedDate.toLocaleDateString('fr-FR', { 
+                    day: 'numeric', 
+                    month: 'long' 
+                  })}
+                </Text>
+                <View style={styles.eventCount}>
+                  <Text style={styles.eventCountText}>
+                    {filteredEvents.length}
+                  </Text>
+                </View>
+              </View>
+              {renderEventList()}
+            </View>
 
-            <Text style={styles.sectionTitle}>Réservations</Text>
             {renderRSVPSection()}
-
-            {renderParticipants()}
           </>
         ) : (
           renderRSVPSection()
         )}
       </ScrollView>
+
       <Menu />
     </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    // backgroundColor: Colors.white,
+    backgroundColor: '#f5f5f5',
   },
   header: {
     backgroundColor: Colors.white,
     paddingTop: 20,
     paddingHorizontal: 20,
     borderRadius: 8,
-    marginHorizontal: 8
+    marginHorizontal: 8,
+    marginBottom: 8,
   },
   headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 16,
-    backgroundColor: Colors.tertiary,
-    padding:10,
-    borderRadius:5
+    backgroundColor: Colors.robine,
+    padding: 10,
+    borderRadius: 5,
   },
   headerTitle: {
     fontFamily: 'System',
     fontWeight: '700',
     fontSize: 30,
-    color: Colors.textPrimary,
+    color: Colors.white,
   },
-  headerComing: {
-    fontFamily: 'System',
-    fontWeight: '400',
-    fontSize: 16,
-    color: Colors.black,
-  },
-  headerSubtitle: {
-    fontFamily: 'System',
-    fontWeight: '400',
-    fontSize: 12,
-    color: Colors.textSecondary,
+  addButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   dateSelector: {
     flexDirection: 'row',
@@ -326,9 +324,10 @@ const styles = StyleSheet.create({
   },
   currentDate: {
     fontFamily: 'System',
-    fontWeight: '400',
+    fontWeight: '600',
     fontSize: 16,
     color: Colors.textPrimary,
+    flex: 1,
   },
   todayButton: {
     backgroundColor: Colors.primary,
@@ -338,9 +337,15 @@ const styles = StyleSheet.create({
   },
   todayButtonText: {
     fontFamily: 'System',
-    fontWeight: '400',
+    fontWeight: '500',
     fontSize: 12,
     color: Colors.white,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 100,
   },
   tabsContainer: {
     flexDirection: 'row',
@@ -355,28 +360,53 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 8,
     marginRight: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   activeTabButton: {
     backgroundColor: Colors.primary,
+    elevation: 4,
   },
   tabLabel: {
     fontFamily: 'System',
-    fontWeight: '400',
-    fontSize: 12,
+    fontWeight: '500',
+    fontSize: 14,
     color: Colors.textPrimary,
     marginLeft: 8,
   },
   activeTabLabel: {
     color: Colors.white,
+    fontWeight: '600',
+  },
+  eventSection: {
+    marginBottom: 16,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginBottom: 12,
   },
   sectionTitle: {
     fontFamily: 'System',
     fontWeight: '600',
-    fontSize: 20,
+    fontSize: 18,
     color: Colors.textPrimary,
-    paddingHorizontal: 20,
-    marginBottom: 12,
-    marginTop: 16,
+  },
+  eventCount: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  eventCountText: {
+    color: Colors.white,
+    fontSize: 14,
+    fontWeight: '600',
   },
   eventList: {
     paddingHorizontal: 20,
@@ -386,8 +416,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 40,
     backgroundColor: Colors.white,
-    marginHorizontal: 8,
-    borderRadius: 8
+    marginHorizontal: 20,
+    borderRadius: 8,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   emptyText: {
     fontFamily: 'System',
@@ -399,11 +434,7 @@ const styles = StyleSheet.create({
   },
   rsvpContainer: {
     paddingHorizontal: 20,
-    marginBottom: 8,
-    paddingBottom: 8,
-    backgroundColor: Colors.white,
-    marginHorizontal: 8,
-    borderRadius: 8
+    marginBottom: 16,
   },
   rsvpCard: {
     flexDirection: 'row',
@@ -413,53 +444,31 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   rsvpInfo: {
     flex: 1,
+    marginRight: 12,
   },
   rsvpTitle: {
     fontFamily: 'System',
     fontWeight: '600',
-    fontSize: 20,
+    fontSize: 16,
+    color: Colors.textPrimary,
     marginBottom: 4,
   },
   rsvpDate: {
     fontFamily: 'System',
     fontWeight: '400',
-    fontSize: 12,
+    fontSize: 14,
     color: Colors.textSecondary,
   },
   rsvpActions: {
     flexDirection: 'row',
+    gap: 8,
   },
-  participantsContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: Colors.white,
-    marginHorizontal: 8,
-    borderRadius: 8
-  },
-  participantCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: Colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  participantInitials: {
-    fontFamily: 'System',
-    fontWeight: '400',
-    fontSize: 12,
-    color: Colors.white,
-    fontWeight: 'bold',
-  },
-  footer: {
-    flex: 1,
-    justifyContent: 'flex-end'
-  },
-  main: {
-    flex: 1,
-  }
 });

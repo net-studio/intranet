@@ -1,4 +1,3 @@
-// src/screens/calendar/CreateEventScreen.js
 import React, { useState } from 'react';
 import {
   View,
@@ -11,17 +10,18 @@ import {
   Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Modal
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import dayjs from 'dayjs';
-import 'dayjs/locale/fr'
-import DateTimePicker, { DateType, useDefaultStyles } from 'react-native-ui-datepicker';
+import 'dayjs/locale/fr';
+import DateTimePicker from 'react-native-ui-datepicker';
 import { COLORS, FONTS, SIZES, NEUMORPHISM } from '../Shared/Theme';
 
 // Services
-import { calendarService } from '../Shared/strapiService';
+import { createEvent } from '../Shared/calendarService';
 import Menu from './Menu';
 
 const CreateEvent = ({ navigation }) => {
@@ -29,129 +29,72 @@ const CreateEvent = ({ navigation }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
-  const [category, setCategory] = useState('meeting'); // meeting, conference, training, social
+  const [category, setCategory] = useState('salon');
   const [isPublic, setIsPublic] = useState(false);
   const [requiresRSVP, setRequiresRSVP] = useState(true);
   const [allDay, setAllDay] = useState(false);
-  
+
   // Date et heure
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(() => {
-    const date = new Date();
-    date.setHours(date.getHours() + 1);
-    return date;
-  });
-  
+  const [startDate, setStartDate] = useState(dayjs());
+  const [endDate, setEndDate] = useState(dayjs().add(1, 'hour'));
+
   // États pour les pickers
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
-  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
-  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
-  
+  const [tempStartDate, setTempStartDate] = useState(null);
+  const [tempEndDate, setTempEndDate] = useState(null);
+
   // État de chargement
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fonctions pour gérer les changements de date/heure
-  const onStartDateChange = (event, selectedDate) => {
-    setShowStartDatePicker(false);
-    if (selectedDate) {
-      const currentDate = new Date(selectedDate);
-      const currentStartDate = new Date(startDate);
-      
-      // Conserver l'heure et les minutes actuelles
-      currentDate.setHours(currentStartDate.getHours());
-      currentDate.setMinutes(currentStartDate.getMinutes());
-      
-      setStartDate(currentDate);
-      
+  // Gestionnaires de changement de date
+  const handleStartDateChange = (params) => {
+    if (params.date) {
+      setTempStartDate(dayjs(params.date));
+    }
+  };
+
+  const handleEndDateChange = (params) => {
+    if (params.date) {
+      setTempEndDate(dayjs(params.date));
+    }
+  };
+
+  const confirmStartDate = () => {
+    if (tempStartDate) {
+      setStartDate(tempStartDate);
+
       // Ajuster la date de fin si nécessaire
-      if (currentDate > endDate) {
-        const newEndDate = new Date(currentDate);
-        newEndDate.setHours(newEndDate.getHours() + 1);
-        setEndDate(newEndDate);
+      if (tempStartDate.isAfter(endDate)) {
+        setEndDate(tempStartDate.add(1, 'hour'));
       }
     }
+    setShowStartDatePicker(false);
+    setTempStartDate(null);
   };
 
-  const onStartTimeChange = (event, selectedTime) => {
-    setShowStartTimePicker(false);
-    if (selectedTime) {
-      const currentTime = new Date(selectedTime);
-      const currentStartDate = new Date(startDate);
-      
-      // Conserver la date actuelle
-      currentStartDate.setHours(currentTime.getHours());
-      currentStartDate.setMinutes(currentTime.getMinutes());
-      
-      setStartDate(currentStartDate);
-      
-      // Ajuster l'heure de fin si nécessaire
-      if (currentStartDate >= endDate) {
-        const newEndDate = new Date(currentStartDate);
-        newEndDate.setHours(newEndDate.getHours() + 1);
-        setEndDate(newEndDate);
-      }
-    }
-  };
-
-  const onEndDateChange = (event, selectedDate) => {
-    setShowEndDatePicker(false);
-    if (selectedDate) {
-      const currentDate = new Date(selectedDate);
-      const currentEndDate = new Date(endDate);
-      
-      // Conserver l'heure et les minutes actuelles
-      currentDate.setHours(currentEndDate.getHours());
-      currentDate.setMinutes(currentEndDate.getMinutes());
-      
+  const confirmEndDate = () => {
+    if (tempEndDate) {
       // Vérifier que la date de fin est après la date de début
-      if (currentDate < startDate) {
+      if (tempEndDate.isBefore(startDate)) {
         Alert.alert('Erreur', 'La date de fin doit être ultérieure à la date de début.');
         return;
       }
-      
-      setEndDate(currentDate);
+      setEndDate(tempEndDate);
     }
-  };
-
-  const onEndTimeChange = (event, selectedTime) => {
-    setShowEndTimePicker(false);
-    if (selectedTime) {
-      const currentTime = new Date(selectedTime);
-      const currentEndDate = new Date(endDate);
-      
-      // Conserver la date actuelle
-      currentEndDate.setHours(currentTime.getHours());
-      currentEndDate.setMinutes(currentTime.getMinutes());
-      
-      // Vérifier que l'heure de fin est après l'heure de début si même jour
-      if (isSameDay(startDate, currentEndDate) && currentEndDate <= startDate) {
-        Alert.alert('Erreur', 'L\'heure de fin doit être ultérieure à l\'heure de début.');
-        return;
-      }
-      
-      setEndDate(currentEndDate);
-    }
-  };
-
-  // Vérifier si deux dates sont le même jour
-  const isSameDay = (date1, date2) => {
-    return (
-      date1.getFullYear() === date2.getFullYear() &&
-      date1.getMonth() === date2.getMonth() &&
-      date1.getDate() === date2.getDate()
-    );
+    setShowEndDatePicker(false);
+    setTempEndDate(null);
   };
 
   // Formatter la date pour l'affichage
   const formatDate = (date) => {
-    return date.toLocaleDateString([], { day: 'numeric', month: 'long', year: 'numeric' });
+    return dayjs(date).format('DD MMMM YYYY');
   };
 
   // Formatter l'heure pour l'affichage
   const formatTime = (date) => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return dayjs(date).format('HH:mm');
   };
 
   // Gérer le changement de catégorie
@@ -166,6 +109,7 @@ const CreateEvent = ({ navigation }) => {
       case 'meeting': return 'Réunion';
       case 'conference': return 'Conférence';
       case 'training': return 'Formation';
+      case 'salon': return 'Salon';
       case 'social': return 'Événement social';
       default: return 'Autre';
     }
@@ -177,6 +121,7 @@ const CreateEvent = ({ navigation }) => {
       case 'meeting': return 'people';
       case 'conference': return 'easel';
       case 'training': return 'school';
+      case 'salon': return 'wine';
       case 'social': return 'wine';
       default: return 'calendar';
     }
@@ -191,7 +136,7 @@ const CreateEvent = ({ navigation }) => {
     }
 
     // Vérifier que la date de fin est après la date de début
-    if (endDate <= startDate && !allDay) {
+    if (endDate.isBefore(startDate) || endDate.isSame(startDate)) {
       Alert.alert('Erreur', 'La date et l\'heure de fin doivent être ultérieures à la date et l\'heure de début.');
       return;
     }
@@ -213,7 +158,7 @@ const CreateEvent = ({ navigation }) => {
       };
 
       // Appeler le service pour créer l'événement
-      const result = await calendarService.createEvent(eventData);
+      const result = await createEvent(eventData);
 
       // Succès
       Alert.alert(
@@ -237,37 +182,149 @@ const CreateEvent = ({ navigation }) => {
       { value: 'meeting', label: 'Réunion' },
       { value: 'conference', label: 'Conférence' },
       { value: 'training', label: 'Formation' },
+      { value: 'salon', label: 'Salon, Foire' },
       { value: 'social', label: 'Événement social' },
       { value: 'other', label: 'Autre' },
     ];
 
     return (
-      <View style={styles.pickerOverlay}>
-        <View style={styles.pickerContainer}>
-          <View style={styles.pickerHeader}>
-            <Text style={styles.pickerTitle}>Sélectionner une catégorie</Text>
-            <TouchableOpacity onPress={() => setShowCategoryPicker(false)}>
-              <Icon name="close" size={24} color={COLORS.textPrimary} />
+      <Modal
+        visible={showCategoryPicker}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowCategoryPicker(false)}
+      >
+        <View style={styles.pickerOverlay}>
+          <View style={styles.pickerContainer}>
+            <View style={styles.pickerHeader}>
+              <Text style={styles.pickerTitle}>Sélectionner une catégorie</Text>
+              <TouchableOpacity onPress={() => setShowCategoryPicker(false)}>
+                <Icon name="close" size={24} color={COLORS.textPrimary} />
+              </TouchableOpacity>
+            </View>
+
+            {categories.map((item) => (
+              <TouchableOpacity
+                key={item.value}
+                style={styles.categoryItem}
+                onPress={() => handleCategoryChange(item.value)}
+              >
+                <View style={styles.categoryIconContainer}>
+                  <Icon name={getCategoryIcon(item.value)} size={20} color={COLORS.primary} />
+                </View>
+                <Text style={styles.categoryItemText}>{item.label}</Text>
+                {category === item.value && (
+                  <Icon name="checkmark" size={20} color={COLORS.primary} />
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
+  // Rendu du DateTimePicker pour la date de début
+  const renderStartDatePicker = () => {
+    if (!showStartDatePicker) return null;
+
+    return (
+      <Modal
+        visible={showStartDatePicker}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => {
+          setShowStartDatePicker(false);
+          setTempStartDate(null);
+        }}
+      >
+        <View style={styles.datePickerOverlay}>
+          <View style={styles.datePickerContainer}>
+            <View style={styles.datePickerHeader}>
+              <Text style={styles.datePickerTitle}>Date de début</Text>
+              <TouchableOpacity onPress={() => {
+                setShowStartDatePicker(false);
+                setTempStartDate(null);
+              }}>
+                <Icon name="close" size={24} color={COLORS.textPrimary} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.selectedDateDisplay}>
+              <Text style={styles.selectedDateLabel}>Date sélectionnée :</Text>
+              <Text style={styles.selectedDateText}>
+                {formatDate(tempStartDate || startDate)}
+                {!allDay && ` à ${formatTime(tempStartDate || startDate)}`}
+              </Text>
+            </View>
+
+            <DateTimePicker
+              key={`start-${(tempStartDate || startDate).format()}`}
+              mode="single"
+              date={(tempStartDate || startDate).toDate()}
+              onChange={handleStartDateChange}
+              timePicker={!allDay}
+              locale="fr"
+              selectedItemColor={COLORS.primary}
+            />
+
+            <TouchableOpacity
+              style={styles.confirmButton}
+              onPress={confirmStartDate}
+            >
+              <Text style={styles.confirmButtonText}>Confirmer</Text>
             </TouchableOpacity>
           </View>
-          
-          {categories.map((item) => (
-            <TouchableOpacity
-              key={item.value}
-              style={styles.categoryItem}
-              onPress={() => handleCategoryChange(item.value)}
-            >
-              <View style={styles.categoryIconContainer}>
-                <Icon name={getCategoryIcon(item.value)} size={20} color={COLORS.primary} />
-              </View>
-              <Text style={styles.categoryItemText}>{item.label}</Text>
-              {category === item.value && (
-                <Icon name="checkmark" size={20} color={COLORS.primary} />
-              )}
-            </TouchableOpacity>
-          ))}
         </View>
-      </View>
+      </Modal>
+    );
+  };
+
+  // Rendu du DateTimePicker pour la date de fin
+  const renderEndDatePicker = () => {
+    if (!showEndDatePicker) return null;
+
+    return (
+      <Modal
+        visible={showEndDatePicker}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => {
+          setShowEndDatePicker(false);
+          setTempEndDate(null);
+        }}
+      >
+        <View style={styles.datePickerOverlay}>
+          <View style={styles.datePickerContainer}>
+            <View style={styles.datePickerHeader}>
+              <Text style={styles.datePickerTitle}>Date de fin</Text>
+              <TouchableOpacity onPress={() => {
+                setShowEndDatePicker(false);
+                setTempEndDate(null);
+              }}>
+                <Icon name="close" size={24} color={COLORS.textPrimary} />
+              </TouchableOpacity>
+            </View>
+
+            <DateTimePicker
+              key={`end-${(tempEndDate || endDate).format()}`}
+              mode="single"
+              date={(tempEndDate || endDate).toDate()}
+              onChange={handleEndDateChange}
+              timePicker={!allDay}
+              locale="fr"
+              selectedItemColor={COLORS.primary}
+            />
+
+            <TouchableOpacity
+              style={styles.confirmButton}
+              onPress={confirmEndDate}
+            >
+              <Text style={styles.confirmButtonText}>Confirmer</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     );
   };
 
@@ -372,49 +429,33 @@ const CreateEvent = ({ navigation }) => {
             {/* Date de début */}
             <View style={styles.dateTimeContainer}>
               <Text style={styles.dateTimeLabel}>Début</Text>
-              <View style={styles.dateTimeButtons}>
-                <TouchableOpacity
-                  style={styles.dateButton}
-                  onPress={() => setShowStartDatePicker(true)}
-                >
-                  <Icon name="calendar-outline" size={18} color={COLORS.primary} />
-                  <Text style={styles.dateButtonText}>{formatDate(startDate)}</Text>
-                </TouchableOpacity>
-
-                {!allDay && (
-                  <TouchableOpacity
-                    style={styles.timeButton}
-                    onPress={() => setShowStartTimePicker(true)}
-                  >
-                    <Icon name="time-outline" size={18} color={COLORS.primary} />
-                    <Text style={styles.timeButtonText}>{formatTime(startDate)}</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+              <TouchableOpacity
+                style={styles.dateTimeButton}
+                onPress={() => setShowStartDatePicker(true)}
+              >
+                <Icon name="calendar-outline" size={18} color={COLORS.primary} />
+                <Text style={styles.dateTimeButtonText}>
+                  {formatDate(startDate)}
+                  {!allDay && ` à ${formatTime(startDate)}`}
+                </Text>
+                <Icon name="chevron-forward" size={18} color={COLORS.darkGray} />
+              </TouchableOpacity>
             </View>
 
             {/* Date de fin */}
             <View style={styles.dateTimeContainer}>
               <Text style={styles.dateTimeLabel}>Fin</Text>
-              <View style={styles.dateTimeButtons}>
-                <TouchableOpacity
-                  style={styles.dateButton}
-                  onPress={() => setShowEndDatePicker(true)}
-                >
-                  <Icon name="calendar-outline" size={18} color={COLORS.primary} />
-                  <Text style={styles.dateButtonText}>{formatDate(endDate)}</Text>
-                </TouchableOpacity>
-
-                {!allDay && (
-                  <TouchableOpacity
-                    style={styles.timeButton}
-                    onPress={() => setShowEndTimePicker(true)}
-                  >
-                    <Icon name="time-outline" size={18} color={COLORS.primary} />
-                    <Text style={styles.timeButtonText}>{formatTime(endDate)}</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+              <TouchableOpacity
+                style={styles.dateTimeButton}
+                onPress={() => setShowEndDatePicker(true)}
+              >
+                <Icon name="calendar-outline" size={18} color={COLORS.primary} />
+                <Text style={styles.dateTimeButtonText}>
+                  {formatDate(endDate)}
+                  {!allDay && ` à ${formatTime(endDate)}`}
+                </Text>
+                <Icon name="chevron-forward" size={18} color={COLORS.darkGray} />
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -445,51 +486,14 @@ const CreateEvent = ({ navigation }) => {
               />
             </View>
           </View>
-
-          {/* Espacement pour éviter que le bouton de sauvegarde ne bloque le contenu */}
-          {/* <View style={{ height: 100 }} /> */}
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Date Pickers */}
-      {showStartDatePicker && (
-        <DateTimePicker
-          value={startDate}
-          mode="date"
-          display="default"
-          onChange={onStartDateChange}
-        />
-      )}
-
-      {showStartTimePicker && (
-        <DateTimePicker
-          value={startDate}
-          mode="time"
-          display="default"
-          onChange={onStartTimeChange}
-        />
-      )}
-
-      {showEndDatePicker && (
-        <DateTimePicker
-          value={endDate}
-          mode="date"
-          display="default"
-          onChange={onEndDateChange}
-        />
-      )}
-
-      {showEndTimePicker && (
-        <DateTimePicker
-          value={endDate}
-          mode="time"
-          display="default"
-          onChange={onEndTimeChange}
-        />
-      )}
-
-      {/* Sélecteur de catégorie */}
+      {/* Pickers */}
+      {renderStartDatePicker()}
+      {renderEndDatePicker()}
       {renderCategoryPicker()}
+
       <Menu />
     </SafeAreaView>
   );
@@ -508,6 +512,7 @@ const styles = StyleSheet.create({
     paddingVertical: SIZES.md,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.lightGray,
+    backgroundColor: COLORS.white,
   },
   backButton: {
     padding: SIZES.xs,
@@ -593,23 +598,52 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     marginLeft: SIZES.sm,
   },
+  switchContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SIZES.md,
+  },
+  switchLabel: {
+    ...FONTS.body1,
+    color: COLORS.textPrimary,
+  },
+  dateTimeContainer: {
+    marginBottom: SIZES.md,
+  },
+  dateTimeLabel: {
+    ...FONTS.body2,
+    color: COLORS.textSecondary,
+    marginBottom: SIZES.xs,
+  },
+  dateTimeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.background,
+    borderRadius: SIZES.sm,
+    paddingHorizontal: SIZES.md,
+    paddingVertical: SIZES.sm,
+    borderWidth: 1,
+    borderColor: COLORS.lightGray,
+  },
+  dateTimeButtonText: {
+    ...FONTS.body2,
+    color: COLORS.textPrimary,
+    marginLeft: SIZES.xs,
+    flex: 1,
+  },
   pickerOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 1000,
   },
   pickerContainer: {
     backgroundColor: COLORS.white,
     borderRadius: SIZES.md,
     width: '80%',
     padding: SIZES.lg,
-    ...NEUMORPHISM.medium,
+    maxHeight: '70%',
   },
   pickerHeader: {
     flexDirection: 'row',
@@ -645,58 +679,57 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     flex: 1,
   },
-  switchContainer: {
+  datePickerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  datePickerContainer: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: SIZES.xl,
+    borderTopRightRadius: SIZES.xl,
+    paddingTop: SIZES.lg,
+    paddingHorizontal: SIZES.lg,
+    paddingBottom: SIZES.xl,
+  },
+  datePickerHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: SIZES.md,
   },
-  switchLabel: {
-    ...FONTS.body1,
+  datePickerTitle: {
+    ...FONTS.h3,
     color: COLORS.textPrimary,
   },
-  dateTimeContainer: {
-    marginBottom: SIZES.md,
+  confirmButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: SIZES.sm,
+    paddingVertical: SIZES.md,
+    alignItems: 'center',
+    marginTop: SIZES.md,
   },
-  dateTimeLabel: {
+  confirmButtonText: {
+    ...FONTS.body1,
+    color: COLORS.white,
+    fontWeight: 'bold',
+  },
+  selectedDateDisplay: {
+    backgroundColor: COLORS.primary + '20',
+    padding: SIZES.md,
+    borderRadius: SIZES.sm,
+    marginBottom: SIZES.md,
+    alignItems: 'center',
+  },
+  selectedDateLabel: {
     ...FONTS.body2,
     color: COLORS.textSecondary,
-    marginBottom: SIZES.xs,
+    marginBottom: 4,
   },
-  dateTimeButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.background,
-    borderRadius: SIZES.sm,
-    paddingHorizontal: SIZES.md,
-    paddingVertical: SIZES.sm,
-    marginRight: SIZES.md,
-    borderWidth: 1,
-    borderColor: COLORS.lightGray,
-  },
-  dateButtonText: {
-    ...FONTS.body2,
-    color: COLORS.textPrimary,
-    marginLeft: SIZES.xs,
-  },
-  timeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.background,
-    borderRadius: SIZES.sm,
-    paddingHorizontal: SIZES.md,
-    paddingVertical: SIZES.sm,
-    borderWidth: 1,
-    borderColor: COLORS.lightGray,
-  },
-  timeButtonText: {
-    ...FONTS.body2,
-    color: COLORS.textPrimary,
-    marginLeft: SIZES.xs,
+  selectedDateText: {
+    ...FONTS.h4,
+    color: COLORS.primary,
+    fontWeight: 'bold',
   },
 });
 

@@ -142,18 +142,36 @@ export const respondToEvent = async (eventId, response) => {
 
 export const createEvent = async (eventData) => {
   try {
-    const userId = await AsyncStorage.getItem('user_id');
+    const documentId = await AsyncStorage.getItem('documentId');
+
+    // Obtenir l'ID du collaborateur
+    const collaborateurResponse = await GlobalApi.filterCollaborateur(documentId.replace(/"/g, ''));
+    const collaborateurs = collaborateurResponse.data.data;
+
+    if (!collaborateurs || collaborateurs.length === 0) {
+      throw new Error('Collaborateur non trouvé');
+    }
+
+    const userId = collaborateurs[0].id;
 
     // Préparer les données de l'événement
     const data = {
-      ...eventData,
-      organizer: userId,
-      participants: eventData.participants.map(id => ({ user: id })),
+      data: {
+        title: eventData.title,
+        description: eventData.description,
+        startDate: eventData.startDate,
+        endDate: eventData.endDate,
+        location: eventData.location,
+        category: eventData.category,
+        isPublic: eventData.isPublic,
+        requiresResponse: eventData.requiresResponse,
+        allDay: eventData.allDay,
+        organizer: userId,
+        // participants: eventData.participants ? eventData.participants.map(id => ({ user: id })) : [],
+      },
     };
 
-    const response = await api.post('/api/events', {
-      data,
-    });
+    const response = await api.post('/api/events', data);
 
     return formatEvent(response.data.data, 'accepted');
   } catch (error) {
@@ -169,29 +187,29 @@ const formatEvent = (event, userResponse = null, includeDetails = false) => {
   // Information de base de l'événement
   const formattedEvent = {
     id: event.id,
-    title: attributes.title,
-    description: attributes.description,
-    startDate: attributes.startDate,
-    endDate: attributes.endDate,
-    allDay: attributes.allDay || false,
-    location: attributes.location?.data ? {
-      id: attributes.location.data.id,
-      name: attributes.location.data.attributes.name,
-      address: attributes.location.data.attributes.address,
+    title: event.titre,
+    description: event.description,
+    startDate: event.startDate,
+    endDate: event.endDate,
+    allDay: event.allDay || false,
+    location: event.location?.data ? {
+      id: event.location.data.id,
+      name: event.location.data.name,
+      address: event.location.data.address,
     } : null,
-    isPublic: attributes.isPublic || false,
-    category: attributes.category || 'other',
-    color: attributes.color || '#3788d8',
+    isPublic: event.isPublic || false,
+    category: event.category || 'other',
+    color: event.color || '#3788d8',
     userResponse,
-    requiresResponse: attributes.requiresResponse || false,
+    requiresResponse: event.requiresResponse || false,
   };
 
   // Ajouter l'organisateur si disponible
-  if (attributes.organizer?.data) {
+  if (event.organizer?.data) {
     formattedEvent.organizer = {
-      id: attributes.organizer.data.id,
-      name: attributes.organizer.data.attributes.username,
-      avatar: attributes.organizer.data.attributes.avatar?.data?.attributes.url || null,
+      id: event.organizer.data.id,
+      name: event.organizer.data.username,
+      avatar: event.organizer.data.avatar?.data?.url || null,
     };
   }
 
