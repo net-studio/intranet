@@ -1,7 +1,7 @@
 import { create } from 'apisauce'
 
-// const API_URL = 'https://robine-api.net-studio.fr';
-const API_URL = "http://localhost:1341";
+const API_URL = 'https://robine-api.net-studio.fr';
+// const API_URL = "http://localhost:1341";
 
 const api = create({
   baseURL: API_URL + "/api",
@@ -44,6 +44,7 @@ const markAllAsRead = (data) => api.put(`/notifications/mark-all-read`, data);
 const deleteNotification = (documentId) => api.delete(`/notifications/${documentId}`);
 const getEvents = (userId) => api.get(`/events?filters[$or][0][participants][id][$in]=${userId}&filters[$or][1][isPublic][$eq]=true&sort[0]=startDate:asc&populate[organizer][fields][0]=*&populate[participants][fields][0]=*&populate[location][fields][0]=*`);
 const setEventResponse = (data) => api.post('/event-responses', data);
+const createEvent = (data) => api.post('/events', data);
 
 export default {
   api,
@@ -72,5 +73,6 @@ export default {
   markAllAsRead,
   deleteNotification,
   getEvents,
-  setEventResponse
+  setEventResponse,
+  createEvent,
 }

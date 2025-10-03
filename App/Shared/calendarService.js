@@ -144,7 +144,7 @@ export const createEvent = async (eventData) => {
   try {
     const documentId = await AsyncStorage.getItem('documentId');
 
-    // Obtenir l'ID du collaborateur
+    // Obtenir le collaborateur
     const collaborateurResponse = await GlobalApi.filterCollaborateur(documentId.replace(/"/g, ''));
     const collaborateurs = collaborateurResponse.data.data;
 
@@ -152,13 +152,23 @@ export const createEvent = async (eventData) => {
       throw new Error('Collaborateur non trouvé');
     }
 
-    const userId = collaborateurs[0].id;
+    const collaborateurId = collaborateurs[0].id;
 
-    // Préparer les données de l'événement
+    // Préparer les données de l'événement SANS organizer pour l'instant
     const data = {
       data: {
-        title: eventData.title,
-        description: eventData.description,
+        titre: eventData.title,
+        texte: eventData.description ? [
+          {
+            type: 'paragraph',
+            children: [
+              {
+                type: 'text',
+                text: eventData.description
+              }
+            ]
+          }
+        ] : null,
         startDate: eventData.startDate,
         endDate: eventData.endDate,
         location: eventData.location,
@@ -166,14 +176,24 @@ export const createEvent = async (eventData) => {
         isPublic: eventData.isPublic,
         requiresResponse: eventData.requiresResponse,
         allDay: eventData.allDay,
-        organizer: userId,
-        // participants: eventData.participants ? eventData.participants.map(id => ({ user: id })) : [],
+        // Ne pas envoyer organizer pour l'instant
       },
     };
 
-    const response = await api.post('/api/events', data);
+    console.log('Données envoyées:', JSON.stringify(data, null, 2));
 
-    return formatEvent(response.data.data, 'accepted');
+    const response = await GlobalApi.createEvent(data);
+
+    console.log('Réponse API:', JSON.stringify(response.data, null, 2));
+
+    // Strapi v5 : la réponse est directement dans response.data
+    const createdEvent = response.data.data || response.data;
+
+    if (!createdEvent) {
+      throw new Error('Événement non créé');
+    }
+
+    return formatEvent(createdEvent, 'accepted');
   } catch (error) {
     console.error('Erreur lors de la création de l\'événement:', error);
     throw error;
@@ -182,20 +202,20 @@ export const createEvent = async (eventData) => {
 
 // Fonction utilitaire pour formater les données d'événement
 const formatEvent = (event, userResponse = null, includeDetails = false) => {
-  const attributes = event.attributes;
 
   // Information de base de l'événement
   const formattedEvent = {
     id: event.id,
-    title: event.titre,
-    description: event.description,
+    documentId: event.documentId,
+    title: event.titre || event.title,
+    texte: event.texte,
     startDate: event.startDate,
     endDate: event.endDate,
     allDay: event.allDay || false,
-    location: event.location?.data ? {
-      id: event.location.data.id,
-      name: event.location.data.name,
-      address: event.location.data.address,
+    location: event.location ? {
+      id: event.location.id,
+      name: event.location.name,
+      address: event.location.address,
     } : null,
     isPublic: event.isPublic || false,
     category: event.category || 'other',
@@ -205,44 +225,42 @@ const formatEvent = (event, userResponse = null, includeDetails = false) => {
   };
 
   // Ajouter l'organisateur si disponible
-  if (event.organizer?.data) {
+  if (event.organizer) {
     formattedEvent.organizer = {
-      id: event.organizer.data.id,
-      name: event.organizer.data.username,
-      avatar: event.organizer.data.avatar?.data?.url || null,
+      id: event.organizer.id,
+      prenom: event.organizer.prenom,
+      nom: event.organizer.nom,
+      avatar: event.organizer.photo?.url || null,
     };
   }
 
   // Ajouter les détails supplémentaires si demandés
   if (includeDetails) {
     // Participants
-    if (attributes.participants?.data) {
-      formattedEvent.participants = attributes.participants.data.map(participant => ({
+    if (event.participants && Array.isArray(event.participants)) {
+      formattedEvent.participants = event.participants.map(participant => ({
         id: participant.id,
-        user: {
-          id: participant.attributes.user.data.id,
-          name: participant.attributes.user.data.attributes.username,
-          avatar: participant.attributes.user.data.attributes.avatar?.data?.attributes.url || null,
-        },
-        response: participant.attributes.response || null,
+        prenom: participant.prenom,
+        nom: participant.nom,
+        response: participant.response || null,
       }));
     }
 
     // Pièces jointes
-    if (attributes.attachments?.data) {
-      formattedEvent.attachments = attributes.attachments.data.map(attachment => ({
+    if (event.attachments && Array.isArray(event.attachments)) {
+      formattedEvent.attachments = event.attachments.map(attachment => ({
         id: attachment.id,
-        name: attachment.attributes.name,
-        url: attachment.attributes.url,
-        mime: attachment.attributes.mime,
-        size: attachment.attributes.size,
+        name: attachment.name,
+        url: attachment.url,
+        mime: attachment.mime,
+        size: attachment.size,
       }));
     }
 
     // Informations supplémentaires
-    formattedEvent.recurring = attributes.recurring || false;
-    formattedEvent.recurrenceRule = attributes.recurrenceRule || null;
-    formattedEvent.reminder = attributes.reminder || null;
+    formattedEvent.recurring = event.recurring || false;
+    formattedEvent.recurrenceRule = event.recurrenceRule || null;
+    formattedEvent.reminder = event.reminder || null;
   }
 
   return formattedEvent;
