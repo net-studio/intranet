@@ -168,7 +168,7 @@ export default function Equipe() {
     }
 
     return (
-        <View>
+        <View>            
             <WelcomeHeader />
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Text style={styles.title}>Collaborateurs</Text>
@@ -297,13 +297,13 @@ const styles = StyleSheet.create({
         padding: 0,
         ...Platform.select({
             ios: {
-                height: Dimensions.get('screen').height,
+                height: Dimensions.get('screen').height -82,
             },
             android: {
-                height: Dimensions.get('screen').height,
+                height: Dimensions.get('screen').height -82,
             },
             default: {
-                height: Dimensions.get('window').height - 185,
+                height: Dimensions.get('window').height - 257,
             },
         }),
     },

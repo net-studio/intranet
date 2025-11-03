@@ -42,24 +42,24 @@ export default function Menu() {
             </TouchableOpacity>
             <TouchableOpacity onPress={() => onPressEquipe()} style={styles.icontext}>
                 <Ionicons name="people" size={24} color={path == 'equipe' ? Colors.robine : 'black'} style={styles.nav} />
-                <Text style={styles.small}>Equipe</Text>
+                <Text style={styles.small}>Équipe</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => onPressActualite()} style={styles.icontext}>
                 <Ionicons name="newspaper-outline" size={24} color={path == 'actualites' ? Colors.robine : 'black'} style={styles.nav} />
-                <Text style={styles.small}>Actus</Text>
+                <Text style={styles.small}>Info Robine</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => onPressAgenda()} style={styles.icontext}>
                 <Ionicons name="calendar-number-outline" size={24} color={path == 'agenda' ? Colors.robine : 'black'} style={styles.nav} />
-                <Text style={styles.small}>Agenda</Text>
+                <Text style={styles.small}>Info Équipe</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => onPressNotifications()} style={styles.icontext}>
                 <Ionicons name="notifications-outline" size={24} color={path == 'Notifications' ? Colors.robine : 'black'} style={styles.nav} />
                 <Text style={styles.small}>Notifs</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => onPressSettings()} style={styles.icontext}>
+            {/* <TouchableOpacity onPress={() => onPressSettings()} style={styles.icontext}>
                 <Ionicons name="settings-outline" size={24} color={path == 'Settings' ? Colors.robine : 'black'} style={styles.nav} />
                 <Text style={styles.small}>Config</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
         </View>
     )
 }
