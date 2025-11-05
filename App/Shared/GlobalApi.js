@@ -14,6 +14,7 @@ const getLogin = (email) => api.get(`/collaborateurs?fields[0]=id&fields[1]=pren
 const getCollaborateur = (p) => api.get(`/collaborateurs?populate=*&sort[0]=prenom&sort[1]=nom&pagination[page]=${p}&pagination[pageSize]=25`);
 const getAgences = (p) => api.get(`/agences?fields[0]=id&fields[1]=label&sort=label:ASC&pagination[page]=${p}&pagination[pageSize]=25`);
 const getActualites = (p) => api.get(`/events?populate=*&sort=position:ASC&pagination[page]=${p}&pagination[pageSize]=25`);
+const getAgenda = (p) => api.get(`/agendas?populate=*&sort=position:ASC&pagination[page]=${p}&pagination[pageSize]=25`);
 const getLastActualite = () => api.get(`/events?populate=*&sort=position:ASC&pagination[page]=1&pagination[pageSize]=1`);
 const getMessages = (p, pSize) => api.get(`/messages?sort=createdAt:ASC&pagination[page]=${p}&pagination[pageSize]=${pSize}&populate[0]=sent_by&populate[1]=attachments`);
 const setNewMessage = (data) => api.post('/messages', data);
@@ -54,6 +55,7 @@ export default {
   getAgences,
   getActualites,
   getLastActualite,
+  getAgenda,
   getMessages,
   setNewMessage,
   getUnreadMessages,

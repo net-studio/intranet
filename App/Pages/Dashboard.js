@@ -17,6 +17,7 @@ export default function Dashboard() {
     const { notificationCount } = useUnifiedNotifications();
     const [recentDocs, setRecentDocs] = useState([]);
     const [actus, setActus] = useState([]);
+    const [agenda, setAgenda] = useState([]);
     const [lastActu, setLastActu] = useState([]);
     const [unreadMessages, setUnreadMessages] = useState([]);
 
@@ -43,6 +44,10 @@ export default function Dashboard() {
             // // Récupérer les actualités
             const news = await GlobalApi.getActualites(1);
             setActus(news.data.data);
+
+            // // Récupérer Agenda'
+            const newsEquipe = await GlobalApi.getAgenda(1);
+            setAgenda(newsEquipe.data.data);
 
             // Récupérer les événements à venir
             // const events = await safeApiCall(dataService.fetchUpcomingEvents);
@@ -96,9 +101,9 @@ export default function Dashboard() {
                                 <View style={[styles.eventIconContainer, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
                                     <Icon name="star" size={24} color={Colors.white} />
                                 </View>
-                                <Text style={[styles.eventTitle, { color: Colors.white }]}>Agenda</Text>
+                                <Text style={[styles.eventTitle, { color: Colors.white }]}>Info Équipe</Text>
                                 <Text style={[styles.eventSubtitle, { color: 'rgba(255,255,255,0.8)' }]}>
-                                    15 meetings
+                                    {agenda.length || 0} actualité(s)
                                 </Text>
                             </TouchableOpacity>
                             <StatCard
@@ -119,7 +124,7 @@ export default function Dashboard() {
                                     <Icon name="newspaper" size={24} color={Colors.secondary} />
                                 </View>
                                 <View style={{flex:1, flexDirection:'row', gap: '0.5rem'}}>
-                                    <Text style={styles.eventTitle}>Actualités</Text>
+                                    <Text style={styles.eventTitle}>Info Robine</Text>
                                     <Text style={styles.eventSubtitle}>({actus.length || 0} actus)</Text>
                                 </View>
                             </View>

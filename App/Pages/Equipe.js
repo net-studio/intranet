@@ -168,52 +168,54 @@ export default function Equipe() {
     }
 
     return (
-        <View>            
+        <View style={styles.main}>
             <WelcomeHeader />
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={styles.title}>Collaborateurs</Text>
-                <Text style={styles.title}>{collaborateur.length} Membres</Text>
-            </View>
-            <SelectList
-                search={true}
-                boxStyles={styles.select}
-                placeholder='Selection par Agence :'
-                setSelected={(val) => setListSelected(val)}
-                data={agences}
-                save="key"
-            />
-            <RenderHeader />
-            <View style={styles.hauteur}>
-                <FlatList
-                    style={{ flex: 1 }}
-                    data={collaborateur}
-                    scrollEnabled={true}
-                    showsVerticalScrollIndicator={true}
-                    renderItem={({ item }) => (
-                        <View style={styles.listItems}>
-                            {item.email == userData.email ?
-                                <TouchableOpacity onPress={() => onPressCollaborateur()}>
-                                    <Image source={{ uri: GlobalApi.API_URL + item.image }} style={styles.image} />
-                                </TouchableOpacity>
-                                :
-                                <TouchableOpacity onPress={() => onPressCollaborateur({
-                                    key: item.documentId,
-                                    value: item.prenom + ' ' + item.nom,
-                                })}>
-                                    <Image source={{ uri: GlobalApi.API_URL + item.image }} style={styles.image} />
-                                </TouchableOpacity>
-                            }
-                            <View style={styles.block}>
-                                <Text>{item.prenom} {item.nom}</Text>
-                                <Text style={{ fontWeight: 'bold' }}>{item.agence}</Text>
-                                {item.telephone ?
-                                    <OpenURLButton url={item.telephone} type='phone'>{item.telephone}</OpenURLButton>
-                                    : null}
-                                <OpenURLButton url={item.email} type='email'>{item.email}</OpenURLButton>
-                            </View>
-                        </View>
-                    )}
+            <View style={styles.container}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text style={styles.title}>Collaborateurs</Text>
+                    <Text style={styles.title}>{collaborateur.length} Membres</Text>
+                </View>
+                <SelectList
+                    search={true}
+                    boxStyles={styles.select}
+                    placeholder='Selection par Agence :'
+                    setSelected={(val) => setListSelected(val)}
+                    data={agences}
+                    save="key"
                 />
+                <RenderHeader />
+                <View style={{ flex: 1 }}>
+                    <FlatList
+                        style={{ flex: 1 }}
+                        data={collaborateur}
+                        scrollEnabled={true}
+                        showsVerticalScrollIndicator={true}
+                        renderItem={({ item }) => (
+                            <View style={styles.listItems}>
+                                {item.email == userData.email ?
+                                    <TouchableOpacity onPress={() => onPressCollaborateur()}>
+                                        <Image source={{ uri: GlobalApi.API_URL + item.image }} style={styles.image} />
+                                    </TouchableOpacity>
+                                    :
+                                    <TouchableOpacity onPress={() => onPressCollaborateur({
+                                        key: item.documentId,
+                                        value: item.prenom + ' ' + item.nom,
+                                    })}>
+                                        <Image source={{ uri: GlobalApi.API_URL + item.image }} style={styles.image} />
+                                    </TouchableOpacity>
+                                }
+                                <View style={styles.block}>
+                                    <Text>{item.prenom} {item.nom}</Text>
+                                    <Text style={{ fontWeight: 'bold' }}>{item.agence}</Text>
+                                    {item.telephone ?
+                                        <OpenURLButton url={item.telephone} type='phone'>{item.telephone}</OpenURLButton>
+                                        : null}
+                                    <OpenURLButton url={item.email} type='email'>{item.email}</OpenURLButton>
+                                </View>
+                            </View>
+                        )}
+                    />
+                </View>
             </View>
             <View style={styles.footer}>
                 <Menu />
@@ -297,13 +299,13 @@ const styles = StyleSheet.create({
         padding: 0,
         ...Platform.select({
             ios: {
-                height: Dimensions.get('screen').height -82,
+                height: Dimensions.get('screen').height,
             },
             android: {
-                height: Dimensions.get('screen').height -82,
+                height: Dimensions.get('screen').height,
             },
             default: {
-                height: Dimensions.get('window').height - 257,
+                height: Dimensions.get('window').height,
             },
         }),
     },
@@ -323,9 +325,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         width: 'calc(0.6 * 100%)',
     },
-    footer: {
+    container: {
         flex: 1,
-        justifyContent: 'flex-end'
+        backgroundColor: '#eee',
+    },
+    footer: {
+        // flex: 1,
+        // justifyContent: 'flex-end'
     },
     main: {
         flex: 1,

@@ -98,7 +98,7 @@ export default function Login() {
                     <Text style={{ color: Colors.white }}>Connexion</Text>
                 </TouchableOpacity>
             </View>
-            <View style={styles.versioning}><Text style={styles.small}>v1.0.0</Text></View>
+            <View style={styles.versioning}><Text style={styles.small}>v1.0.2</Text></View>
         </View>
     )
 }

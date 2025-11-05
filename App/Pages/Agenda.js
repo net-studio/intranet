@@ -1,474 +1,267 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  FlatList,
-  SafeAreaView,
-  ScrollView
-} from 'react-native';
-import Menu from '../Components/Menu';
-import { useNavigation } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/Ionicons';
-import WelcomeHeader from '../Components/WelcomeHeader';
+import { View, Text, Image, StyleSheet, ScrollView, Linking } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import GlobalApi from '../Shared/GlobalApi';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import Colors from '../Shared/Colors';
-import { fetchEvents, respondToEvent } from '../Shared/calendarService';
-
-import EventCard from '../Components/EventCard';
-import RSVPButton from '../Components/RSVPButton';
-import MonthlyCalendar from '../Components/MonthlyCalendar';
+import Menu from '../Components/Menu';
+import WelcomeHeader from '../Components/WelcomeHeader';
 
 export default function Agenda() {
-  const navigation = useNavigation();
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [events, setEvents] = useState([]);
-  const [filteredEvents, setFilteredEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  // Tabs pour les filtres
-  const [activeTab, setActiveTab] = useState('meetings');
-  const tabs = [
-    { id: 'meetings', label: 'Rendez-vous', icon: 'people' },
-    { id: 'rsvps', label: 'Réservations', icon: 'checkmark-circle' },
-  ];
+    const [actualites, setAgenda] = useState([]);
 
-  useEffect(() => {
-    loadEvents();
-  }, []);
-
-  useEffect(() => {
-    if (events.length > 0) {
-      filterEventsByDate();
-    }
-  }, [selectedDate, activeTab, events]);
-
-  const loadEvents = async () => {
-    try {
-      setLoading(true);
-      const data = await fetchEvents();
-      setEvents(data);
-    } catch (error) {
-      console.error('Erreur lors du chargement des événements:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filterEventsByDate = () => {
-    const selected = selectedDate.toDateString();
-    let filtered = events.filter(event => {
-      const eventDate = new Date(event.startDate).toDateString();
-      return eventDate === selected;
-    });
-
-    if (activeTab === 'rsvps') {
-      filtered = filtered.filter(event => event.requiresResponse);
-    }
-
-    setFilteredEvents(filtered);
-  };
-
-  const handleRSVP = async (eventId, response) => {
-    try {
-      await respondToEvent(eventId, response);
-      // Mettre à jour l'état local pour refléter le changement
-      const updatedEvents = events.map(event => {
-        if (event.id === eventId) {
-          return { ...event, userResponse: response };
+    const getAgenda = async () => {
+        let p = 1;
+        let result = (await GlobalApi.getAgenda(p)).data;
+        const resp = result.data.map((item) => ({
+            id: item.id,
+            documentId: item.documentId,
+            titre: item.titre,
+            soustitre: item.soustitre,
+            texte: item.texte,
+            images: item.medias,
+            position: item.position,
+            startdate: item.startDate,
+            createdAt: item.createdAt,
+        }))
+        while (p < result.meta.pagination.pageCount) {
+            p += 1;
+            let result = (await GlobalApi.getAgenda(p)).data;
+            let tmp = result.data.map((item) => ({
+                id: item.id,
+                documentId: item.documentId,
+                titre: item.titre,
+                soustitre: item.soustitre,
+                texte: item.texte,
+                images: item.medias,
+                position: item.position,
+                startdate: item.startDate,
+                createdAt: item.createdAt,
+            }));
+            resp.push(...tmp);
         }
-        return event;
-      });
-      setEvents(updatedEvents);
-    } catch (error) {
-      console.error('Erreur lors de la réponse à l\'événement:', error);
-    }
-  };
-
-  // Gestionnaire de sélection de date depuis le calendrier
-  const handleDateSelect = (date) => {
-    setSelectedDate(date);
-  };
-
-  // Aller à aujourd'hui
-  const goToToday = () => {
-    setSelectedDate(new Date());
-  };
-
-  // Rendu pour chaque section d'événements
-  const renderEventList = () => {
-    if (loading) {
-      return (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>Chargement...</Text>
-        </View>
-      );
+        console.log(resp);
+        setAgenda(resp);
     }
 
-    if (filteredEvents.length === 0) {
-      return (
-        <View style={styles.emptyContainer}>
-          <Icon name="calendar-outline" size={64} color={Colors.lightGray} />
-          <Text style={styles.emptyText}>
-            Aucun événement prévu pour cette journée
-          </Text>
-        </View>
-      );
-    }
+    useEffect(() => {
+        getAgenda();
+    }, []);
 
-    return (
-      <FlatList
-        data={filteredEvents}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <EventCard
-            event={item}
-            onPress={() => navigation.navigate('EventDetails', { eventId: item.id })}
-            onRSVP={(response) => handleRSVP(item.id, response)}
-          />
-        )}
-        contentContainerStyle={styles.eventList}
-        scrollEnabled={false}
-      />
-    );
-  };
-
-  // Rendu des RSVPs
-  const renderRSVPSection = () => {
-    const pendingRSVPs = events.filter(event =>
-      event.requiresResponse && !event.userResponse
-    );
-
-    return (
-      <View style={styles.rsvpContainer}>
-        <Text style={styles.sectionTitle}>À confirmer</Text>
-        {pendingRSVPs.length === 0 ? (
-          <Text style={styles.emptyText}>Aucune confirmation en attente</Text>
-        ) : (
-          pendingRSVPs.map(event => (
-            <View key={event.id} style={styles.rsvpCard}>
-              <View style={styles.rsvpInfo}>
-                <Text style={styles.rsvpTitle}>{event.title}</Text>
-                <Text style={styles.rsvpDate}>
-                  {new Date(event.startDate).toLocaleDateString('fr-FR', {
-                    day: 'numeric',
-                    month: 'long',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </Text>
-              </View>
-              <View style={styles.rsvpActions}>
-                <RSVPButton
-                  onPress={() => handleRSVP(event.id, 'accepted')}
-                  status="accept"
-                />
-                <RSVPButton
-                  onPress={() => handleRSVP(event.id, 'declined')}
-                  status="decline"
-                />
-              </View>
-            </View>
-          ))
-        )}
-      </View>
-    );
-  };
-
-  // Créer un nouvel événement
-  const navigateToCreateEvent = () => {
-    navigation.navigate('CreateEvent');
-  };
-
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <WelcomeHeader />
-
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <Text style={styles.headerTitle}>Agenda</Text>
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={navigateToCreateEvent}
-          >
-            <Icon name="add" size={24} color={Colors.white} />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.dateSelector}>
-          <Text style={styles.currentDate}>
-            {selectedDate.toLocaleDateString('fr-FR', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric'
-            })}
-          </Text>
-          <TouchableOpacity style={styles.todayButton} onPress={goToToday}>
-            <Text style={styles.todayButtonText}>Aujourd'hui</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Calendrier mensuel avec sélection de date */}
-        <MonthlyCalendar 
-          events={events} 
-          selectedDate={selectedDate}
-          onDateSelect={handleDateSelect}
-        />
-      </View>
-
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.tabsContainer}>
-          {tabs.map(tab => (
-            <TouchableOpacity
-              key={tab.id}
-              style={[
-                styles.tabButton,
-                activeTab === tab.id && styles.activeTabButton
-              ]}
-              onPress={() => setActiveTab(tab.id)}
-            >
-              <Icon
-                name={tab.icon}
-                size={18}
-                color={activeTab === tab.id ? Colors.white : Colors.textPrimary}
-              />
-              <Text
-                style={[
-                  styles.tabLabel,
-                  activeTab === tab.id && styles.activeTabLabel
-                ]}
-              >
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {activeTab === 'meetings' ? (
-          <>
-            <View style={styles.eventSection}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>
-                  Événements du {selectedDate.toLocaleDateString('fr-FR', { 
-                    day: 'numeric', 
-                    month: 'long' 
-                  })}
-                </Text>
-                <View style={styles.eventCount}>
-                  <Text style={styles.eventCountText}>
-                    {filteredEvents.length}
-                  </Text>
+    const showBlock = (actualite, key) => {
+        return (
+            <View style={styles.block} key={key}>
+                <View style={styles.onglet}>
+                    <Text style={styles.date}>{new Date(actualite?.startdate).toLocaleDateString('fr-FR')}</Text>
                 </View>
-              </View>
-              {renderEventList()}
+                <Text style={styles.sujet}>{actualite?.sujet}</Text>
+                <View style={styles.description}>
+                    {actualite?.texte ?
+                        <>
+                            {actualite?.texte.map((elt, id) => {
+                                return (
+                                    <View key={id}>
+                                        {elt?.type == 'list' ? (
+                                            <View style={styles.listview}>
+                                                {elt.children.map((lst, idx) => {
+                                                    return (
+                                                        <View key={idx}>
+                                                            {elt.format == 'ordered' ? (
+                                                                <View key={idx} style={styles.list}>
+                                                                    <Text>{idx + 1}. {lst.children[0]?.text}</Text>
+                                                                </View>
+                                                            ) : (
+                                                                <View key={idx}>
+                                                                    <View style={styles.list}>
+                                                                        <Ionicons name="checkmark-circle-outline" size={16} color="black" />
+                                                                        <Text>
+                                                                            {lst.children[0]?.text}
+                                                                            {lst.children[1]?.url ? (
+                                                                                <Text 
+                                                                                    style={{ color: 'blue' }}
+                                                                                    onPress={() => Linking.openURL(lst.children[1]?.url)}
+                                                                                >
+                                                                                    {lst.children[1]?.children[0]?.text}
+                                                                                </Text>
+                                                                            ) : null}
+                                                                        </Text>
+                                                                    </View>
+                                                                </View>
+                                                            )}
+                                                        </View>
+                                                    );
+                                                })}
+                                            </View>
+                                        ) : (
+                                            <Text key={id} style={styles.text}>
+                                                {elt.children.map((lst, idx) => {
+                                                    return (
+                                                        <View key={idx}>
+                                                            {lst.type == 'text' ? (
+                                                                <Text>{lst.text}</Text>
+                                                            ) : lst.type == 'link' ? (
+                                                                <Text style={styles.lien} onPress={() => Linking.openURL(lst.url)}>
+                                                                    {lst.children[0]?.text}
+                                                                </Text>
+                                                            ) : (
+                                                                <></>
+                                                            )}
+                                                        </View>
+                                                    )
+                                                })}
+                                            </Text>
+                                        )}
+                                    </View>
+                                );
+                            })}
+                        </>
+                        : null}
+                </View>
+                <View>
+                    {actualite?.images !== null ?
+                        <>
+                            {actualite?.images.map((elt, id) => {
+                                return (
+                                    <View key={id}>
+                                        <View style={styles.listview}>
+                                            <View style={{ width: '100%', paddingBottom: `calc(${elt?.height}/${elt?.width} * 100%)` }}>
+                                                <Image source={{ uri: GlobalApi.API_URL + elt?.url }} style={{ position: 'absolute', borderRadius: 5, display: 'block', width: '100%', height: '100%' }} />
+                                            </View>
+                                        </View>
+                                    </View>
+                                );
+                            })}
+                        </>
+                        : null}
+                </View>
             </View>
+        );
+    }
 
-            {renderRSVPSection()}
-          </>
-        ) : (
-          renderRSVPSection()
-        )}
-      </ScrollView>
-
-      <Menu />
-    </SafeAreaView>
-  );
+    return (
+        <View style={styles.main}>
+            <WelcomeHeader />
+            <View style={styles.container}>
+                <View style={styles.mainhead}>
+                    <Text style={styles.titre}>Robine Intranet</Text>
+                    <Text style={styles.titre}>Info Equipe</Text>
+                </View>
+                <View style={styles.scroll}>
+                    <View style={styles.block}>
+                        <ScrollView style={styles.contentContainer}>
+                            {actualites.map((actualite, key) => {
+                                return (
+                                    <View key={key}>
+                                        {showBlock(actualite, key)}
+                                    </View>
+                                );
+                            })}
+                        </ScrollView>
+                    </View>
+                </View>
+            </View>
+            <View style={styles.footer}>
+                <Menu />
+            </View>
+        </View>
+    )
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
-    backgroundColor: Colors.white,
-    paddingTop: 20,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginHorizontal: 8,
-    marginBottom: 8,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-    backgroundColor: Colors.robine,
-    padding: 10,
-    borderRadius: 5,
-  },
-  headerTitle: {
-    fontFamily: 'System',
-    fontWeight: '700',
-    fontSize: 30,
-    color: Colors.white,
-  },
-  addButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dateSelector: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  currentDate: {
-    fontFamily: 'System',
-    fontWeight: '600',
-    fontSize: 16,
-    color: Colors.textPrimary,
-    flex: 1,
-  },
-  todayButton: {
-    backgroundColor: Colors.primary,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  todayButtonText: {
-    fontFamily: 'System',
-    fontWeight: '500',
-    fontSize: 12,
-    color: Colors.white,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 100,
-  },
-  tabsContainer: {
-    flexDirection: 'row',
-    marginVertical: 16,
-    paddingHorizontal: 20,
-  },
-  tabButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.white,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginRight: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  activeTabButton: {
-    backgroundColor: Colors.primary,
-    elevation: 4,
-  },
-  tabLabel: {
-    fontFamily: 'System',
-    fontWeight: '500',
-    fontSize: 14,
-    color: Colors.textPrimary,
-    marginLeft: 8,
-  },
-  activeTabLabel: {
-    color: Colors.white,
-    fontWeight: '600',
-  },
-  eventSection: {
-    marginBottom: 16,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontFamily: 'System',
-    fontWeight: '600',
-    fontSize: 18,
-    color: Colors.textPrimary,
-  },
-  eventCount: {
-    backgroundColor: Colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  eventCountText: {
-    color: Colors.white,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  eventList: {
-    paddingHorizontal: 20,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 40,
-    backgroundColor: Colors.white,
-    marginHorizontal: 20,
-    borderRadius: 8,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-  },
-  emptyText: {
-    fontFamily: 'System',
-    fontWeight: '400',
-    fontSize: 16,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 16,
-  },
-  rsvpContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  rsvpCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: Colors.white,
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  rsvpInfo: {
-    flex: 1,
-    marginRight: 12,
-  },
-  rsvpTitle: {
-    fontFamily: 'System',
-    fontWeight: '600',
-    fontSize: 16,
-    color: Colors.textPrimary,
-    marginBottom: 4,
-  },
-  rsvpDate: {
-    fontFamily: 'System',
-    fontWeight: '400',
-    fontSize: 14,
-    color: Colors.textSecondary,
-  },
-  rsvpActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-});
+    date: {
+        fontSize: 12,
+        color: Colors.white,
+        backgroundColor: Colors.strongray,
+        borderTopLeftRadius: 5,
+        borderTopRightRadius: 5,
+        paddingHorizontal: 5,
+        paddingVertical: 3,
+        marginBottom: 1,
+    },
+    onglet: {
+        justifyContent: 'flex-end',
+        flexDirection: 'row',
+    },
+    sujet: {
+        color: '#fff',
+        marginTop: 0,
+        fontSize: 14,
+        fontWeight: 'bold',
+        backgroundColor: Colors.robine,
+        paddingVertical: 5,
+        paddingHorizontal: 10,
+        borderTopLeftRadius: 5,
+    },
+    listview: {
+        flex: 1,
+        gap: 10,
+        alignItems: 'center',
+    },
+    lien: {
+        color: '#0e68d6ff',
+    },
+    list: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5
+    },
+    text: {
+        flex: 1,
+        marginVertical: 5
+    },
+    description: {
+        flex: 1,
+        paddingHorizontal: 10,
+        marginVertical: 5,
+    },
+    contentContainer: {
+        borderRadius: 10,
+        elevation: 2,
+        marginTop: 2,
+        marginBottom: 5,
+        marginHorizontal: 5,
+        paddingVertical: 0,
+    },
+    scroll: {
+        flex: 1,
+        gap: 5,
+        marginHorizontal: 5,
+        marginBottom: 5,
+        backgroundColor: 'none',
+        paddingVertical: 0,
+        paddingHorizontal: 0,
+        justifyContent: 'space-between',
+    },
+    block: {
+        flex: 1,
+        paddingHorizontal: 0,
+        paddingTop: 5,
+        marginBottom: 0,
+        backgroundColor: '#fff',
+    },
+    mainhead: {
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 10,
+    },
+    titre: {
+        textAlign: 'center',
+        margin: 5,
+        fontSize: 16,
+        fontWeight: 'bold'
+    },
+    container: {
+        flex: 1,
+        backgroundColor: '#eee',
+    },
+    footer: {
+        // flex: 1,
+        // justifyContent: 'flex-end'
+    },
+    main: {
+        flex: 1,
+    }
+})

@@ -1,4 +1,4 @@
-import { View, Text, Image, StyleSheet, ScrollView } from 'react-native'
+import { View, Text, Image, StyleSheet, ScrollView, Linking } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import GlobalApi from '../Shared/GlobalApi';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -60,35 +60,56 @@ export default function Actualites() {
                             {actualite?.texte.map((elt, id) => {
                                 return (
                                     <View key={id}>
-                                        {elt?.type == 'list' ?
+                                        {elt?.type == 'list' ? (
                                             <View style={styles.listview}>
                                                 {elt.children.map((lst, idx) => {
                                                     return (
                                                         <View key={idx}>
-                                                            {elt.format == 'ordered' ?
+                                                            {elt.format == 'ordered' ? (
                                                                 <View key={idx} style={styles.list}>
                                                                     <Text>{idx + 1}. {lst.children[0]?.text}</Text>
                                                                 </View>
-                                                                :
+                                                            ) : (
                                                                 <View key={idx}>
                                                                     <View style={styles.list}>
                                                                         <Ionicons name="checkmark-circle-outline" size={16} color="black" />
-                                                                        <Text>{lst.children[0]?.text}
-                                                                            {lst.children[1]?.url ?
-                                                                                <Text style={{ color: 'blue' }}
-                                                                                    onPress={() => Linking.openURL(lst.children[1]?.url)}>
+                                                                        <Text>
+                                                                            {lst.children[0]?.text}
+                                                                            {lst.children[1]?.url ? (
+                                                                                <Text 
+                                                                                    style={{ color: 'blue' }}
+                                                                                    onPress={() => Linking.openURL(lst.children[1]?.url)}
+                                                                                >
                                                                                     {lst.children[1]?.children[0]?.text}
                                                                                 </Text>
-                                                                                : null}
+                                                                            ) : null}
                                                                         </Text>
                                                                     </View>
-                                                                </View>}
+                                                                </View>
+                                                            )}
+                                                        </View>
+                                                    );
+                                                })}
+                                            </View>
+                                        ) : (
+                                            <Text key={id} style={styles.text}>
+                                                {elt.children.map((lst, idx) => {
+                                                    return (
+                                                        <View key={idx}>
+                                                            {lst.type == 'text' ? (
+                                                                <Text>{lst.text}</Text>
+                                                            ) : lst.type == 'link' ? (
+                                                                <Text style={styles.lien} onPress={() => Linking.openURL(lst.url)}>
+                                                                    {lst.children[0]?.text}
+                                                                </Text>
+                                                            ) : (
+                                                                <></>
+                                                            )}
                                                         </View>
                                                     )
                                                 })}
-                                            </View>
-                                            : <Text key={id} style={styles.text}>{elt.children[0]?.text}</Text>
-                                        }
+                                            </Text>
+                                        )}
                                     </View>
                                 );
                             })}
@@ -122,7 +143,7 @@ export default function Actualites() {
             <View style={styles.container}>
                 <View style={styles.mainhead}>
                     <Text style={styles.titre}>Robine Intranet</Text>
-                    <Text style={styles.titre}>News</Text>
+                    <Text style={styles.titre}>Info Robine</Text>
                 </View>
                 <View style={styles.scroll}>
                     <View style={styles.block}>
@@ -174,6 +195,9 @@ const styles = StyleSheet.create({
         flex: 1,
         gap: 10,
         alignItems: 'center',
+    },
+    lien: {
+        color: '#0e68d6ff',
     },
     list: {
         flex: 1,
