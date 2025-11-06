@@ -97,7 +97,13 @@ export default function Actualites() {
                                                     return (
                                                         <View key={idx}>
                                                             {lst.type == 'text' ? (
-                                                                <Text>{lst.text}</Text>
+                                                                <>
+                                                                {lst?.bold ? (
+                                                                    <Text style={styles.gras}>{lst.text}</Text>
+                                                                    ):(
+                                                                    <Text>{lst.text}</Text>
+                                                                )}
+                                                                </>
                                                             ) : lst.type == 'link' ? (
                                                                 <Text style={styles.lien} onPress={() => Linking.openURL(lst.url)}>
                                                                     {lst.children[0]?.text}
@@ -194,7 +200,10 @@ const styles = StyleSheet.create({
     listview: {
         flex: 1,
         gap: 10,
-        alignItems: 'center',
+        alignItems: 'flex-start',
+    },
+    gras: {
+        fontWeight:'600',
     },
     lien: {
         color: '#0e68d6ff',
