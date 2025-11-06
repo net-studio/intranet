@@ -42,7 +42,6 @@ const Notifications = ({ navigation }) => {
         const documentId = userData.documentId; //await AsyncStorage.getItem('documentId');
         const isLogged = !!documentId;
         setIsLoggedIn(isLogged);
-
         // Si non connecté, rediriger vers l'écran de connexion
         if (!isLogged) {
           navigation.replace('home');
@@ -341,10 +340,12 @@ const Notifications = ({ navigation }) => {
         >
           <Icon name="arrow-back" size={24} color={Colors.black} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => sendTestNotification()}>
-        {/* <TouchableOpacity onPress={() => fcmNotification()}> */}
-          <Text style={styles.testNotification}>Test FCM</Text>
-        </TouchableOpacity>
+        {userData.documentId == 'ejj7ra6lycouw297dhbb34bb' ?
+          <TouchableOpacity onPress={() => sendTestNotification()}>
+            {/* <TouchableOpacity onPress={() => fcmNotification()}> */}
+            <Text style={styles.testNotification}>Test FCM</Text>
+          </TouchableOpacity>
+          : null}
         <Text style={styles.headerTitle}>Notifications</Text>
 
         {notifications.length > 0 && (

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Image, ScrollView, SafeAreaView, TouchableOpacity, Platform } from 'react-native'
+import { View, Text, StyleSheet, Image, ScrollView, SafeAreaView, TouchableOpacity, Platform, Linking } from 'react-native'
 import React, { useState, useEffect, useContext } from 'react'
 import Colors from '../Shared/Colors';
 import Menu from '../Components/Menu';
@@ -123,7 +123,7 @@ export default function Dashboard() {
                                 <View style={styles.eventIconContainer}>
                                     <Icon name="newspaper" size={24} color={Colors.secondary} />
                                 </View>
-                                <View style={{flex:1, flexDirection:'row', gap: '0.5rem'}}>
+                                <View style={{ flex: 1, flexDirection: 'row', gap: '0.5rem' }}>
                                     <Text style={styles.eventTitle}>Info Robine</Text>
                                     <Text style={styles.eventSubtitle}>({actus.length || 0} actus)</Text>
                                 </View>
@@ -140,7 +140,7 @@ export default function Dashboard() {
                         </TouchableOpacity>
 
                         {/* Événements à venir */}
-                        <View style={styles.parametres}>
+                        <View style={styles.row}>
                             <TouchableOpacity
                                 style={styles.eventCard}
                                 onPress={() => navigation.navigate('Settings')}
@@ -151,6 +151,16 @@ export default function Dashboard() {
                                 <Text style={styles.eventTitle}>Paramètres</Text>
                                 <Text style={styles.eventSubtitle}>Configuration & Réglages</Text>
                             </TouchableOpacity>
+                            <View style={styles.eventCard}>
+                                <TouchableOpacity onPress={() => Linking.openURL('https://amhappy.fr/')}>
+                                    <Image
+                                        source={require('../Assets/images/logo-amhappy.png')}
+                                        style={styles.amhappy}
+                                        resizeMode="contain"
+                                    />
+                                </TouchableOpacity>
+                                <Text style={styles.eventSubtitle}>Accéder à l'application</Text>
+                            </View>
                         </View>
                     </View>
                 </ScrollView>
@@ -275,6 +285,12 @@ const styles = StyleSheet.create({
                 marginBottom: 4,
             },
         }),
+    },
+    amhappy: {
+        width: 100,
+        height: 53,
+        marginRight: 16,
+        marginBottom: 10,
     },
     logo: {
         width: 50,

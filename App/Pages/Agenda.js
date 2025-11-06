@@ -40,7 +40,6 @@ export default function Agenda() {
             }));
             resp.push(...tmp);
         }
-        console.log(resp);
         setAgenda(resp);
     }
 
