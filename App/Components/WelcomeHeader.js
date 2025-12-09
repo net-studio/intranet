@@ -32,7 +32,7 @@ export default function WelcomeHeader() {
             <View style={styles.topnav}>
                 <TouchableOpacity onPress={() => onPressLogout()}>
                     <Ionicons name="power-sharp" size={24} color="black" />
-                    <Text style={styles.small}>v1.0.4</Text>
+                    <Text style={styles.small}>v1.0.5</Text>
                 </TouchableOpacity>
                 <View>
                     <Text>Hello,</Text>
