@@ -210,7 +210,7 @@ export default function Equipe() {
                                     {item.telephone ?
                                         <OpenURLButton url={item.telephone} type='phone'>{item.telephone}</OpenURLButton>
                                         : null}
-                                    <OpenURLButton url={item.email} type='email'>{item.email}</OpenURLButton>
+                                    {/* <OpenURLButton url={item.email} type='email'>{item.email}</OpenURLButton> */}
                                 </View>
                             </View>
                         )}
