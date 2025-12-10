@@ -4,8 +4,9 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import api from './strapiService';
-import { requestForToken, onMessageListener } from './Firebase';
 import GlobalApi from './GlobalApi';
+// import { requestForToken, onMessageListener } from './Firebase';
+import oneSignalService from './OneSignal';
 
 /**
  * Service unifié pour gérer les notifications web (FCM) et mobile (Expo)
@@ -15,47 +16,80 @@ const unifiedNotificationService = {
    * Initialise les notifications dans l'application
    * @returns {Promise<boolean>} - Résultat de l'opération
    */
+  // initialize: async () => {
+  //   try {
+  //     if (Platform.OS === 'web') {
+  //       // Utiliser Firebase Cloud Messaging pour le web
+  //       await requestForToken();
+
+  //       // Enregistrer le token sur le serveur après l'avoir obtenu
+  //       const fcmToken = localStorage.getItem('fcmToken');
+  //       if (fcmToken) {
+  //         await unifiedNotificationService.registerTokenWithServer(fcmToken, 'web');
+  //       }
+
+  //       // Configurer l'écouteur pour les messages FCM foreground
+  //       onMessageListener()
+  //         .then((payload) => {
+  //           console.log('Foreground FCM received by app:', payload);
+  //           if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+  //             // Send to service worker to handle display
+  //             navigator.serviceWorker.controller.postMessage({
+  //               type: 'FOREGROUND_FCM_RECEIVED', // New message type
+  //               payload: payload
+  //             });
+  //           } else {
+  //             // Fallback if service worker isn't active/controlling, though unlikely with FCM setup
+  //             // This path might still lead to duplicates if not careful, but primary path is SW.
+  //             console.warn('Service worker not active. Foreground FCM might not be displayed consistently.');
+  //             // As a last resort, and if no SW, uncommenting below would show a direct notification
+  //             // but the goal is to centralize in SW.
+  //             // if ('Notification' in window && Notification.permission === 'granted') {
+  //             //   new Notification(payload?.notification?.title || 'Notification', {
+  //             //     body: payload?.notification?.body || '',
+  //             //     tag: payload?.notification?.tag || undefined // Pass tag if available
+  //             //   });
+  //             // }
+  //           }
+  //         })
+  //         .catch((err) => console.log('FCM listener error in app: ', err));
+
+  //       return true; // Ensure this is returned for the web platform path
+  //     } else { // Mobile platform (iOS, Android)
+  //       // Configurer Expo Notifications pour les mobiles
+  //       Notifications.setNotificationHandler({
+  //         handleNotification: async () => ({
+  //           shouldShowAlert: true,
+  //           shouldPlaySound: true,
+  //           shouldSetBadge: true,
+  //         }),
+  //       });
+
+  //       // The following lines were also in the original commented code.
+  //       // Let's consider if they are necessary here or handled elsewhere (e.g., by useUnifiedNotifications hook).
+  //       // The useUnifiedNotifications hook already calls registerForPushNotifications via its own initializeNotifications -> unifiedNotificationService.registerForPushNotifications.
+  //       // So, calling it again here in initialize() might be redundant or even problematic if not handled carefully.
+  //       // For now, focus on reinstating setNotificationHandler.
+  //       // If registerForPushNotifications is indeed needed here, it should be reviewed for idempotency.
+  //       // Based on current structure, it's better called from the hook after permissions.
+  //       // await unifiedNotificationService.registerForPushNotifications(); // KEEP THIS COMMENTED for now unless proven necessary
+
+  //       console.log('UnifiedNotificationService: Expo notification handler set for mobile.');
+  //       return true;
+  //     }
+  //   } catch (error) {
+  //     console.error('Erreur lors de l\'initialisation des notifications:', error);
+  //     return false;
+  //   }
+  // },
   initialize: async () => {
     try {
       if (Platform.OS === 'web') {
-        // Utiliser Firebase Cloud Messaging pour le web
-        await requestForToken();
-
-        // Enregistrer le token sur le serveur après l'avoir obtenu
-        const fcmToken = localStorage.getItem('fcmToken');
-        if (fcmToken) {
-          await unifiedNotificationService.registerTokenWithServer(fcmToken, 'web');
-        }
-
-        // Configurer l'écouteur pour les messages FCM foreground
-        onMessageListener()
-          .then((payload) => {
-            console.log('Foreground FCM received by app:', payload);
-            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-              // Send to service worker to handle display
-              navigator.serviceWorker.controller.postMessage({
-                type: 'FOREGROUND_FCM_RECEIVED', // New message type
-                payload: payload
-              });
-            } else {
-              // Fallback if service worker isn't active/controlling, though unlikely with FCM setup
-              // This path might still lead to duplicates if not careful, but primary path is SW.
-              console.warn('Service worker not active. Foreground FCM might not be displayed consistently.');
-              // As a last resort, and if no SW, uncommenting below would show a direct notification
-              // but the goal is to centralize in SW.
-              // if ('Notification' in window && Notification.permission === 'granted') {
-              //   new Notification(payload?.notification?.title || 'Notification', {
-              //     body: payload?.notification?.body || '',
-              //     tag: payload?.notification?.tag || undefined // Pass tag if available
-              //   });
-              // }
-            }
-          })
-          .catch((err) => console.log('FCM listener error in app: ', err));
-
-        return true; // Ensure this is returned for the web platform path
-      } else { // Mobile platform (iOS, Android)
-        // Configurer Expo Notifications pour les mobiles
+        // ✅ Utiliser OneSignal au lieu de Firebase
+        await oneSignalService.initialize();
+        return true;
+      } else {
+        // Mobile reste inchangé pour l'instant
         Notifications.setNotificationHandler({
           handleNotification: async () => ({
             shouldShowAlert: true,
@@ -63,21 +97,10 @@ const unifiedNotificationService = {
             shouldSetBadge: true,
           }),
         });
-
-        // The following lines were also in the original commented code.
-        // Let's consider if they are necessary here or handled elsewhere (e.g., by useUnifiedNotifications hook).
-        // The useUnifiedNotifications hook already calls registerForPushNotifications via its own initializeNotifications -> unifiedNotificationService.registerForPushNotifications.
-        // So, calling it again here in initialize() might be redundant or even problematic if not handled carefully.
-        // For now, focus on reinstating setNotificationHandler.
-        // If registerForPushNotifications is indeed needed here, it should be reviewed for idempotency.
-        // Based on current structure, it's better called from the hook after permissions.
-        // await unifiedNotificationService.registerForPushNotifications(); // KEEP THIS COMMENTED for now unless proven necessary
-
-        console.log('UnifiedNotificationService: Expo notification handler set for mobile.');
         return true;
       }
     } catch (error) {
-      console.error('Erreur lors de l\'initialisation des notifications:', error);
+      console.error('Erreur initialisation:', error);
       return false;
     }
   },
@@ -229,7 +252,7 @@ const unifiedNotificationService = {
           {
             data: {
               lastUsed: new Date().toISOString(),
-              user: collaborateurId
+              user: collaborateurs[0].documentId.replace(/"/g, ''),
             },
             status: 'published',
           }
@@ -241,7 +264,7 @@ const unifiedNotificationService = {
           data: {
             token,
             device: deviceType,
-            user: collaborateurId,
+            user: collaborateurs[0].documentId.replace(/"/g, ''),
             lastUsed: new Date().toISOString(),
           },
           status: 'published',
@@ -510,18 +533,25 @@ const unifiedNotificationService = {
    */
   updateBadgeCount: async () => {
     try {
-      if (Platform.OS === 'web') {
-        // Les badges ne sont pas supportés sur tous les navigateurs
-        return false;
-      }
-
       const unreadCount = await unifiedNotificationService.getUnreadCount();
 
-      await Notifications.setBadgeCountAsync(unreadCount);
+      if (Platform.OS === 'web') {
+        // ✅ Badge API pour PWA (Chrome/Edge)
+        if ('setAppBadge' in navigator) {
+          if (unreadCount > 0) {
+            navigator.setAppBadge(unreadCount);
+          } else {
+            navigator.clearAppBadge();
+          }
+        }
+      } else {
+        // Mobile
+        await Notifications.setBadgeCountAsync(unreadCount);
+      }
 
       return true;
     } catch (error) {
-      console.error('Erreur lors de la mise à jour du badge:', error);
+      console.error('Erreur badge:', error);
       return false;
     }
   },

@@ -23,12 +23,14 @@ export const useUnifiedNotifications = () => {
     try {
       // Initialiser le service de notification unifié
       const success = await unifiedNotificationService.initialize();
+      const token = await unifiedNotificationService.getToken();
+      console.log('🔑 MON TOKEN FCM:', token);
       setHasPermission(success);
-      
+
       if (success) {
         // Enregistrer pour les notifications push
         await unifiedNotificationService.registerForPushNotifications();
-        
+
         // Mettre à jour le badge
         await updateBadgeCount();
       }
@@ -45,12 +47,12 @@ export const useUnifiedNotifications = () => {
       setLoading(true);
       const count = await unifiedNotificationService.getUnreadCount();
       setNotificationCount(count);
-      
+
       // Mettre à jour le badge de l'application (seulement sur mobile)
       if (Platform.OS !== 'web') {
         await Notifications.setBadgeCountAsync(count);
       }
-      
+
       return count;
     } catch (error) {
       console.error('Erreur lors de la mise à jour du badge:', error);
@@ -87,7 +89,7 @@ export const useUnifiedNotifications = () => {
   const markAsRead = useCallback(async (notificationId) => {
     try {
       const success = await unifiedNotificationService.markAsRead(notificationId);
-      
+
       if (success) {
         // Mettre à jour localement la notification
         setNotifications(prevNotifications =>
@@ -97,11 +99,11 @@ export const useUnifiedNotifications = () => {
               : notification
           )
         );
-        
+
         // Mettre à jour le compteur
         await updateBadgeCount();
       }
-      
+
       return success;
     } catch (error) {
       console.error('Erreur lors du marquage de la notification comme lue:', error);
@@ -115,22 +117,22 @@ export const useUnifiedNotifications = () => {
   const markAllAsRead = useCallback(async () => {
     try {
       const success = await unifiedNotificationService.markAllAsRead();
-      
+
       if (success) {
         // Mettre à jour toutes les notifications localement
         setNotifications(prevNotifications =>
           prevNotifications.map(notification => ({ ...notification, read: true }))
         );
-        
+
         // Mettre à jour le compteur
         setNotificationCount(0);
-        
+
         // Réinitialiser le badge (seulement sur mobile)
         if (Platform.OS !== 'web') {
           await Notifications.setBadgeCountAsync(0);
         }
       }
-      
+
       return success;
     } catch (error) {
       console.error('Erreur lors du marquage de toutes les notifications comme lues:', error);
@@ -145,17 +147,17 @@ export const useUnifiedNotifications = () => {
   const deleteNotification = useCallback(async (notificationId) => {
     try {
       const success = await unifiedNotificationService.deleteNotification(notificationId);
-      
+
       if (success) {
         // Supprimer la notification localement
         setNotifications(prevNotifications =>
           prevNotifications.filter(notification => notification.id !== notificationId)
         );
-        
+
         // Mettre à jour le compteur si nécessaire
         await updateBadgeCount();
       }
-      
+
       return success;
     } catch (error) {
       console.error('Erreur lors de la suppression de la notification:', error);
@@ -170,7 +172,7 @@ export const useUnifiedNotifications = () => {
   const handleNotificationReceived = useCallback((notification) => {
     // Mise à jour du compteur de notifications
     updateBadgeCount();
-    
+
     // On pourrait aussi ajouter la notification à la liste locale
     // si elle concerne l'utilisateur actuel
     console.log('Notification reçue:', notification);
@@ -184,7 +186,7 @@ export const useUnifiedNotifications = () => {
     // Adaptation pour gérer à la fois les notifications web et mobiles
     let data;
     let notificationId;
-    
+
     if (Platform.OS === 'web') {
       // Format pour les notifications web
       data = response.notification?.data || {};
@@ -194,13 +196,13 @@ export const useUnifiedNotifications = () => {
       data = response.notification.request.content.data || {};
       notificationId = data.id;
     }
-    
+
     console.log('Réponse de notification:', response);
-    
+
     // Naviguer vers l'écran approprié en fonction du type de notification
     if (data && data.screen) {
       const { screen, params } = data;
-      
+
       // Si la notification concerne une entité spécifique
       if (screen === 'MessageDetails' && params && params.conversationId) {
         navigation.navigate('ChatRoom', { conversationId: params.conversationId });
@@ -216,7 +218,7 @@ export const useUnifiedNotifications = () => {
       // Par défaut, aller à l'écran des notifications
       navigation.navigate('Notifications');
     }
-    
+
     // Marquer la notification comme lue si on a un ID
     if (notificationId) {
       markAsRead(notificationId);
@@ -234,7 +236,7 @@ export const useUnifiedNotifications = () => {
       handleNotificationReceived, // For in-app UI updates (e.g., badge, list)
       handleNotificationResponse  // For handling clicks
     );
-    
+
     // Nettoyage à la destruction du composant
     return () => {
       if (typeof unsubscribe === 'function') {
@@ -252,7 +254,7 @@ export const useUnifiedNotifications = () => {
     const intervalId = setInterval(() => {
       updateBadgeCount();
     }, 30000);
-    
+
     return () => clearInterval(intervalId);
   }, [updateBadgeCount]);
 

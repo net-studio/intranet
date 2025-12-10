@@ -32,6 +32,7 @@
     "js-sha256": "^0.11.0",
     "lodash.filter": "^4.6.0",
     "lucide-react": "^0.544.0",
+    "onesignal-expo-plugin": "^2.0.3",
     "qs": "^6.14.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
@@ -42,7 +43,8 @@
     "react-native-pdf": "^6.7.7",
     "react-native-ui-datepicker": "^3.1.2",
     "react-native-web": "~0.19.13",
-    "react-native-webview": "13.12.5"
+    "react-native-webview": "13.12.5",
+    "react-onesignal": "^3.4.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

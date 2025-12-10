@@ -4,9 +4,11 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { AuthContext } from '../Context/AuthContext'
 import Colors from '../Shared/Colors';
+import useUnifiedNotifications from '../Hooks/useUnifiedNotifications';
 
 export default function Menu() {
     const { userData, setUserData } = useContext(AuthContext);
+    const { notificationCount } = useUnifiedNotifications();
     const path = useRoute().name;
     const navigation = useNavigation();
     const [adherent, setAdherent] = useState([]);
@@ -33,7 +35,7 @@ export default function Menu() {
     const onPressNotifications = () => {
         navigation.navigate('Notifications');
     }
-    
+
     return (
         <View style={styles.topnav}>
             <TouchableOpacity onPress={() => onPressHome()} style={styles.icontext}>
@@ -53,7 +55,21 @@ export default function Menu() {
                 <Text style={styles.small}>Info Équipe</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => onPressNotifications()} style={styles.icontext}>
-                <Ionicons name="notifications-outline" size={24} color={path == 'Notifications' ? Colors.robine : 'black'} style={styles.nav} />
+                <View style={styles.iconContainer}>
+                    <Ionicons
+                        name="notifications-outline"
+                        size={24}
+                        color={path == 'Notifications' ? Colors.robine : 'black'}
+                        style={styles.nav}
+                    />
+                    {notificationCount > 0 && ( // ✅ Badge si > 0
+                        <View style={styles.badge}>
+                            <Text style={styles.badgeText}>
+                                {notificationCount > 99 ? '99+' : notificationCount}
+                            </Text>
+                        </View>
+                    )}
+                </View>
                 <Text style={styles.small}>Notifs</Text>
             </TouchableOpacity>
             {/* <TouchableOpacity onPress={() => onPressSettings()} style={styles.icontext}>
@@ -95,5 +111,29 @@ const styles = StyleSheet.create({
         marginRight: 5,
         marginBottom: 5,
         marginLeft: 5,
+    },
+    iconContainer: {
+        position: 'relative',
+        width: 30,
+        height: 30,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    badge: {
+        position: 'absolute',
+        top: -5,
+        right: -10,
+        backgroundColor: '#FF3B30', // Rouge iOS
+        borderRadius: 10,
+        minWidth: 20,
+        height: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 5,
+    },
+    badgeText: {
+        color: 'white',
+        fontSize: 11,
+        fontWeight: 'bold',
     },
 })
