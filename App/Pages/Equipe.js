@@ -210,7 +210,12 @@ export default function Equipe() {
                                     {item.telephone ?
                                         <OpenURLButton url={item.telephone} type='phone'>{item.telephone}</OpenURLButton>
                                         : null}
-                                    {/* <OpenURLButton url={item.email} type='email'>{item.email}</OpenURLButton> */}
+                                    {item.email &&
+                                        item.email.toLowerCase().trim().endsWith("@energie-robine.fr") && (
+                                            <OpenURLButton url={item.email} type="email">
+                                                {item.email}
+                                            </OpenURLButton>
+                                        )}
                                 </View>
                             </View>
                         )}
