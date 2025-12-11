@@ -23,7 +23,7 @@ export const useNotificationsByType = () => {
       
       if (response && response.data && response.data.data) {
         const notifications = response.data.data;
-        console.log(`📋 Total notifications non lues: ${notifications.length}`);
+        // console.log(`📋 Total notifications non lues: ${notifications.length}`);
         
         // ✅ Les données sont directement dans n, pas dans n.attributes
         const eventNotifs = notifications.filter(n => {
@@ -36,7 +36,7 @@ export const useNotificationsByType = () => {
           return notifData.agendaId || (notifData.navigateTo === 'AgendaDetail');
         });
         
-        console.log(`✅ Counts - Events: ${eventNotifs.length}, Agenda: ${agendaNotifs.length}`);
+        // console.log(`✅ Counts - Events: ${eventNotifs.length}, Agenda: ${agendaNotifs.length}`);
         setEventCount(eventNotifs.length);
         setAgendaCount(agendaNotifs.length);
       }
