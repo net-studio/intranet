@@ -16,72 +16,6 @@ const unifiedNotificationService = {
    * Initialise les notifications dans l'application
    * @returns {Promise<boolean>} - Résultat de l'opération
    */
-  // initialize: async () => {
-  //   try {
-  //     if (Platform.OS === 'web') {
-  //       // Utiliser Firebase Cloud Messaging pour le web
-  //       await requestForToken();
-
-  //       // Enregistrer le token sur le serveur après l'avoir obtenu
-  //       const fcmToken = localStorage.getItem('fcmToken');
-  //       if (fcmToken) {
-  //         await unifiedNotificationService.registerTokenWithServer(fcmToken, 'web');
-  //       }
-
-  //       // Configurer l'écouteur pour les messages FCM foreground
-  //       onMessageListener()
-  //         .then((payload) => {
-  //           console.log('Foreground FCM received by app:', payload);
-  //           if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-  //             // Send to service worker to handle display
-  //             navigator.serviceWorker.controller.postMessage({
-  //               type: 'FOREGROUND_FCM_RECEIVED', // New message type
-  //               payload: payload
-  //             });
-  //           } else {
-  //             // Fallback if service worker isn't active/controlling, though unlikely with FCM setup
-  //             // This path might still lead to duplicates if not careful, but primary path is SW.
-  //             console.warn('Service worker not active. Foreground FCM might not be displayed consistently.');
-  //             // As a last resort, and if no SW, uncommenting below would show a direct notification
-  //             // but the goal is to centralize in SW.
-  //             // if ('Notification' in window && Notification.permission === 'granted') {
-  //             //   new Notification(payload?.notification?.title || 'Notification', {
-  //             //     body: payload?.notification?.body || '',
-  //             //     tag: payload?.notification?.tag || undefined // Pass tag if available
-  //             //   });
-  //             // }
-  //           }
-  //         })
-  //         .catch((err) => console.log('FCM listener error in app: ', err));
-
-  //       return true; // Ensure this is returned for the web platform path
-  //     } else { // Mobile platform (iOS, Android)
-  //       // Configurer Expo Notifications pour les mobiles
-  //       Notifications.setNotificationHandler({
-  //         handleNotification: async () => ({
-  //           shouldShowAlert: true,
-  //           shouldPlaySound: true,
-  //           shouldSetBadge: true,
-  //         }),
-  //       });
-
-  //       // The following lines were also in the original commented code.
-  //       // Let's consider if they are necessary here or handled elsewhere (e.g., by useUnifiedNotifications hook).
-  //       // The useUnifiedNotifications hook already calls registerForPushNotifications via its own initializeNotifications -> unifiedNotificationService.registerForPushNotifications.
-  //       // So, calling it again here in initialize() might be redundant or even problematic if not handled carefully.
-  //       // For now, focus on reinstating setNotificationHandler.
-  //       // If registerForPushNotifications is indeed needed here, it should be reviewed for idempotency.
-  //       // Based on current structure, it's better called from the hook after permissions.
-  //       // await unifiedNotificationService.registerForPushNotifications(); // KEEP THIS COMMENTED for now unless proven necessary
-
-  //       console.log('UnifiedNotificationService: Expo notification handler set for mobile.');
-  //       return true;
-  //     }
-  //   } catch (error) {
-  //     console.error('Erreur lors de l\'initialisation des notifications:', error);
-  //     return false;
-  //   }
-  // },
   initialize: async () => {
     try {
       if (Platform.OS === 'web') {
@@ -117,7 +51,7 @@ const unifiedNotificationService = {
       }
 
       if (!Device.isDevice) {
-        console.log('Les notifications push ne fonctionnent pas sur l\'émulateur');
+        // console.log('Les notifications push ne fonctionnent pas sur l\'émulateur');
         return false;
       }
 
@@ -130,7 +64,7 @@ const unifiedNotificationService = {
       }
 
       if (finalStatus !== 'granted') {
-        console.log('Permission des notifications refusée!');
+        // console.log('Permission des notifications refusée!');
         return false;
       }
 
@@ -185,7 +119,7 @@ const unifiedNotificationService = {
       }
 
       if (!token) {
-        console.warn('Token de notification non obtenu');
+        // console.warn('Token de notification non obtenu');
         return null;
       }
 
@@ -222,7 +156,7 @@ const unifiedNotificationService = {
       const documentId = await AsyncStorage.getItem('documentId');
 
       if (!documentId) {
-        console.warn('Impossible d\'enregistrer le token: utilisateur non connecté');
+        // console.warn('Impossible d\'enregistrer le token: utilisateur non connecté');
         return false;
       }
 
@@ -231,13 +165,13 @@ const unifiedNotificationService = {
       const collaborateurs = collaborateurResponse.data.data;
 
       if (!collaborateurs || collaborateurs.length === 0) {
-        console.warn('Collaborateur non trouvé avec le documentId:', documentId);
+        // console.warn('Collaborateur non trouvé avec le documentId:', documentId);
         return false;
       }
 
       // const collaborateurId = collaborateurs[0].documentId.replace(/"/g, '');
       const collaborateurId = collaborateurs[0].id;
-      console.log("collaborateurId : ", collaborateurId);
+      // console.log("collaborateurId : ", collaborateurId);
       // Vérifier si le token existe déjà
       // const existingTokensResponse = await api.get(`/api/fcm-tokens?filters[token][$eq]=${token}`);
       const existingTokensResponse = await GlobalApi.getApiToken(token);
@@ -245,7 +179,7 @@ const unifiedNotificationService = {
       if (existingTokensResponse.data.data.length > 0) {
         // Token déjà enregistré, mise à jour de la date d'utilisation
         const tokenId = existingTokensResponse.data.data[0].documentId;
-        console.log("tokenId : ", tokenId)
+        // console.log("tokenId : ", tokenId)
         // await api.put(`/api/fcm-tokens/${tokenId}`, {
         await GlobalApi.updateToken(
           tokenId,
@@ -257,7 +191,7 @@ const unifiedNotificationService = {
             status: 'published',
           }
         );
-        console.log('Token mis à jour sur le serveur');
+        // console.log('Token mis à jour sur le serveur');
       } else {
         // Créer un nouveau token
         await GlobalApi.createToken({
@@ -269,7 +203,7 @@ const unifiedNotificationService = {
           },
           status: 'published',
         });
-        console.log('Nouveau token créé sur le serveur');
+        // console.log('Nouveau token créé sur le serveur');
       }
 
       return true;
@@ -291,8 +225,11 @@ const unifiedNotificationService = {
       // This listener is for notification CLICKS relayed from the service worker.
       const swMessageListener = (event) => {
         if (event.data && event.data.type === 'NOTIFICATION_CLICK' && onNotificationResponse) {
-          console.log('App received NOTIFICATION_CLICK from SW:', event.data);
+          // console.log('App received NOTIFICATION_CLICK from SW:', event.data);
           onNotificationResponse(event.data);
+          if (window.refreshNotificationCount) {
+            window.refreshNotificationCount();
+          }
         }
       };
 
@@ -312,6 +249,9 @@ const unifiedNotificationService = {
         notification => {
           if (onNotificationReceived) {
             onNotificationReceived(notification);
+          }
+          if (window.refreshNotificationCount) {
+            window.refreshNotificationCount();
           }
         }
       );
@@ -345,7 +285,7 @@ const unifiedNotificationService = {
       const documentId = await AsyncStorage.getItem('documentId');
 
       if (!documentId) {
-        console.warn('Impossible de récupérer les notifications: utilisateur non connecté');
+        // console.warn('Impossible de récupérer les notifications: utilisateur non connecté');
         return { data: [], meta: { pagination: { total: 0 } } };
       }
 
@@ -354,7 +294,7 @@ const unifiedNotificationService = {
       const collaborateurs = collaborateurResponse.data.data;
 
       if (!collaborateurs || collaborateurs.length === 0) {
-        console.warn('Collaborateur non trouvé avec le documentId:', documentId);
+        // console.warn('Collaborateur non trouvé avec le documentId:', documentId);
         return { data: [], meta: { pagination: { total: 0 } } };
       }
 
@@ -416,7 +356,7 @@ const unifiedNotificationService = {
       const documentId = await AsyncStorage.getItem('documentId');
 
       if (!documentId) {
-        console.warn('Impossible de marquer les notifications: utilisateur non connecté');
+        // console.warn('Impossible de marquer les notifications: utilisateur non connecté');
         return false;
       }
 
@@ -425,7 +365,7 @@ const unifiedNotificationService = {
       const collaborateurs = collaborateurResponse.data.data;
 
       if (!collaborateurs || collaborateurs.length === 0) {
-        console.warn('Collaborateur non trouvé avec le documentId:', documentId);
+        // console.warn('Collaborateur non trouvé avec le documentId:', documentId);
         return false;
       }
 
@@ -464,11 +404,11 @@ const unifiedNotificationService = {
 
             return 'web-notification';
           } else {
-            console.log('Permission de notification web refusée');
+            // console.log('Permission de notification web refusée');
             return null;
           }
         } else {
-          console.log('Les notifications ne sont pas supportées dans ce navigateur');
+          // console.log('Les notifications ne sont pas supportées dans ce navigateur');
           return null;
         }
       } else {
@@ -502,7 +442,7 @@ const unifiedNotificationService = {
       const documentId = await AsyncStorage.getItem('documentId');
 
       if (!documentId) {
-        console.warn('Impossible de compter les notifications: utilisateur non connecté');
+        // console.warn('Impossible de compter les notifications: utilisateur non connecté');
         return 0;
       }
 
@@ -511,7 +451,7 @@ const unifiedNotificationService = {
       const collaborateurs = collaborateurResponse.data.data;
 
       if (!collaborateurs || collaborateurs.length === 0) {
-        console.warn('Collaborateur non trouvé avec le documentId:', documentId);
+        // console.warn('Collaborateur non trouvé avec le documentId:', documentId);
         return 0;
       }
 

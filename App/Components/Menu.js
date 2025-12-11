@@ -5,17 +5,14 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { AuthContext } from '../Context/AuthContext'
 import Colors from '../Shared/Colors';
 import useUnifiedNotifications from '../Hooks/useUnifiedNotifications';
+import useNotificationsByType from '../Hooks/useNotificationsByType'; // ✅ Nouveau hook
 
 export default function Menu() {
     const { userData, setUserData } = useContext(AuthContext);
     const { notificationCount } = useUnifiedNotifications();
+    const { eventCount, agendaCount } = useNotificationsByType(); // ✅ Récupère les counts par type
     const path = useRoute().name;
     const navigation = useNavigation();
-    const [adherent, setAdherent] = useState([]);
-
-    useEffect(() => {
-        setAdherent(userData);
-    }, [])
 
     const onPressHome = () => {
         navigation.navigate('home');
@@ -35,34 +32,69 @@ export default function Menu() {
     const onPressNotifications = () => {
         navigation.navigate('Notifications');
     }
-
+    
     return (
         <View style={styles.topnav}>
             <TouchableOpacity onPress={() => onPressHome()} style={styles.icontext}>
                 <Ionicons name="home" size={24} color={path == 'home' ? Colors.robine : 'black'} style={styles.nav} />
                 <Text style={styles.small}>Home</Text>
             </TouchableOpacity>
+
             <TouchableOpacity onPress={() => onPressEquipe()} style={styles.icontext}>
                 <Ionicons name="people" size={24} color={path == 'equipe' ? Colors.robine : 'black'} style={styles.nav} />
                 <Text style={styles.small}>Équipe</Text>
             </TouchableOpacity>
+
+            {/* ✅ Info Robine avec badge */}
             <TouchableOpacity onPress={() => onPressActualite()} style={styles.icontext}>
-                <Ionicons name="newspaper-outline" size={24} color={path == 'actualites' ? Colors.robine : 'black'} style={styles.nav} />
+                <View style={styles.iconContainer}>
+                    <Ionicons 
+                        name="newspaper-outline" 
+                        size={24} 
+                        color={path == 'actualites' ? Colors.robine : 'black'} 
+                        style={styles.nav} 
+                    />
+                    {eventCount > 0 && (
+                        <View style={styles.badge}>
+                            <Text style={styles.badgeText}>
+                                {eventCount > 99 ? '99+' : eventCount}
+                            </Text>
+                        </View>
+                    )}
+                </View>
                 <Text style={styles.small}>Info Robine</Text>
             </TouchableOpacity>
+
+            {/* ✅ Info Équipe avec badge */}
             <TouchableOpacity onPress={() => onPressAgenda()} style={styles.icontext}>
-                <Ionicons name="calendar-number-outline" size={24} color={path == 'agenda' ? Colors.robine : 'black'} style={styles.nav} />
+                <View style={styles.iconContainer}>
+                    <Ionicons 
+                        name="calendar-number-outline" 
+                        size={24} 
+                        color={path == 'agenda' ? Colors.robine : 'black'} 
+                        style={styles.nav} 
+                    />
+                    {agendaCount > 0 && (
+                        <View style={styles.badge}>
+                            <Text style={styles.badgeText}>
+                                {agendaCount > 99 ? '99+' : agendaCount}
+                            </Text>
+                        </View>
+                    )}
+                </View>
                 <Text style={styles.small}>Info Équipe</Text>
             </TouchableOpacity>
+
+            {/* Notifications avec badge */}
             <TouchableOpacity onPress={() => onPressNotifications()} style={styles.icontext}>
                 <View style={styles.iconContainer}>
-                    <Ionicons
-                        name="notifications-outline"
-                        size={24}
-                        color={path == 'Notifications' ? Colors.robine : 'black'}
-                        style={styles.nav}
+                    <Ionicons 
+                        name="notifications-outline" 
+                        size={24} 
+                        color={path == 'Notifications' ? Colors.robine : 'black'} 
+                        style={styles.nav} 
                     />
-                    {notificationCount > 0 && ( // ✅ Badge si > 0
+                    {notificationCount > 0 && (
                         <View style={styles.badge}>
                             <Text style={styles.badgeText}>
                                 {notificationCount > 99 ? '99+' : notificationCount}
@@ -72,10 +104,6 @@ export default function Menu() {
                 </View>
                 <Text style={styles.small}>Notifs</Text>
             </TouchableOpacity>
-            {/* <TouchableOpacity onPress={() => onPressSettings()} style={styles.icontext}>
-                <Ionicons name="settings-outline" size={24} color={path == 'Settings' ? Colors.robine : 'black'} style={styles.nav} />
-                <Text style={styles.small}>Config</Text>
-            </TouchableOpacity> */}
         </View>
     )
 }
@@ -112,6 +140,7 @@ const styles = StyleSheet.create({
         marginBottom: 5,
         marginLeft: 5,
     },
+    // ✅ Nouveaux styles pour les badges
     iconContainer: {
         position: 'relative',
         width: 30,
@@ -123,7 +152,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: -5,
         right: -10,
-        backgroundColor: '#FF3B30', // Rouge iOS
+        backgroundColor: '#FF3B30',
         borderRadius: 10,
         minWidth: 20,
         height: 20,

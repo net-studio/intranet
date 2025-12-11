@@ -24,7 +24,7 @@ export const useUnifiedNotifications = () => {
       // Initialiser le service de notification unifié
       const success = await unifiedNotificationService.initialize();
       const token = await unifiedNotificationService.getToken();
-      console.log('🔑 MON TOKEN FCM:', token);
+      // console.log('🔑 MON TOKEN FCM:', token);
       setHasPermission(success);
 
       if (success) {
@@ -175,7 +175,7 @@ export const useUnifiedNotifications = () => {
 
     // On pourrait aussi ajouter la notification à la liste locale
     // si elle concerne l'utilisateur actuel
-    console.log('Notification reçue:', notification);
+    // console.log('Notification reçue:', notification);
   }, [updateBadgeCount]);
 
   /**
@@ -197,7 +197,7 @@ export const useUnifiedNotifications = () => {
       notificationId = data.id;
     }
 
-    console.log('Réponse de notification:', response);
+    // console.log('Réponse de notification:', response);
 
     // Naviguer vers l'écran approprié en fonction du type de notification
     if (data && data.screen) {
@@ -232,6 +232,8 @@ export const useUnifiedNotifications = () => {
     // Configurer les écouteurs de notifications
     // This will now correctly set up mobile listeners, and for web,
     // the NOTIFICATION_CLICK listener from the service worker.
+    updateBadgeCount();
+
     const unsubscribe = unifiedNotificationService.setupNotificationListeners(
       handleNotificationReceived, // For in-app UI updates (e.g., badge, list)
       handleNotificationResponse  // For handling clicks
@@ -246,16 +248,20 @@ export const useUnifiedNotifications = () => {
     // Ensure dependencies are correct. `initializeNotifications` is not directly used here,
     // but its action (calling unifiedNotificationService.initialize) is a prerequisite.
     // The direct dependencies are the callbacks.
-  }, [handleNotificationReceived, handleNotificationResponse]);
+  }, [handleNotificationReceived, handleNotificationResponse, updateBadgeCount]);
   // Removed initializeNotifications from deps array as it's in its own effect.
 
   // Mettre à jour le compteur de notifications périodiquement (toutes les 30 secondes)
   useEffect(() => {
+    window.refreshNotificationCount = updateBadgeCount;
     const intervalId = setInterval(() => {
       updateBadgeCount();
     }, 30000);
 
-    return () => clearInterval(intervalId);
+    return () => {
+      clearInterval(intervalId);
+      delete window.refreshNotificationCount;
+    };
   }, [updateBadgeCount]);
 
   return {
