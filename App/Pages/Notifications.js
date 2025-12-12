@@ -275,8 +275,14 @@ const Notifications = ({ navigation }) => {
           markAsRead(item);
 
           // Gérer la navigation en fonction du type de notification
-          if (item.data && item.data.navigateTo) {
-            navigation.navigate(item.data.navigateTo, item.data.params);
+          if (item.data) {
+            if (item.data.agendaId) {
+              // Notification d'agenda → Info Équipe
+              navigation.navigate('agenda');
+            } else if (item.data.eventId) {
+              // Notification d'event → Info Robine
+              navigation.navigate('actualites');
+            }
           }
         }}
       >

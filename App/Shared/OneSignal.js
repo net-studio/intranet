@@ -48,7 +48,7 @@ const oneSignalService = {
 
       // Demander la permission
       const permission = await OneSignal.Notifications.requestPermission();
-    //   console.log('🔔 Permission notifications:', permission);
+      //   console.log('🔔 Permission notifications:', permission);
 
       if (!permission) {
         // console.warn('⚠️ Permission refusée');
@@ -80,7 +80,7 @@ const oneSignalService = {
    */
   linkUserToCollaborateur: async (oneSignalUserId) => {
     try {
-    //   console.log('🔗 Début linkUserToCollaborateur:', oneSignalUserId);
+      //   console.log('🔗 Début linkUserToCollaborateur:', oneSignalUserId);
 
       const documentId = await AsyncStorage.getItem('documentId');
 
@@ -98,8 +98,9 @@ const oneSignalService = {
         return false;
       }
 
-      const collaborateurDocId = collaborateurs[0].documentId;
-    //   console.log(`🔗 User trouvé - DocID: ${collaborateurDocId}`);
+      // const collaborateurDocId = collaborateurs[0].documentId;
+      const collaborateurDocId = collaborateurs[0].documentId.replace(/"/g, '');
+      //   console.log(`🔗 User trouvé - DocID: ${collaborateurDocId}`);
 
       // Vérifier si un token existe déjà
       const existingTokens = await GlobalApi.getApiToken(oneSignalUserId);
@@ -112,7 +113,9 @@ const oneSignalService = {
         await GlobalApi.updateToken(tokenId, {
           data: {
             lastUsed: new Date().toISOString(),
-            user: collaborateurDocId, // ✅ documentId
+            user: {
+              connect: [collaborateurDocId] // ✅ Essaye avec un array de string
+            }
           },
         });
         // console.log('✅ Token mis à jour');
@@ -143,11 +146,11 @@ const oneSignalService = {
    * Configure les listeners pour les notifications
    */
   setupListeners: (onNotificationReceived, onNotificationOpened) => {
-    if (Platform.OS !== 'web') return () => {};
+    if (Platform.OS !== 'web') return () => { };
 
     // Listener pour les notifications reçues
     OneSignal.on('notificationDisplay', (event) => {
-    //   console.log('📬 Notification affichée:', event);
+      //   console.log('📬 Notification affichée:', event);
       if (onNotificationReceived) {
         onNotificationReceived(event);
       }
@@ -155,11 +158,11 @@ const oneSignalService = {
 
     // Listener pour les clics
     OneSignal.on('notificationDismiss', (event) => {
-    //   console.log('🗑️ Notification fermée:', event);
+      //   console.log('🗑️ Notification fermée:', event);
     });
 
     return () => {
-    //   console.log('🧹 Cleanup OneSignal listeners');
+      //   console.log('🧹 Cleanup OneSignal listeners');
     };
   },
 };
