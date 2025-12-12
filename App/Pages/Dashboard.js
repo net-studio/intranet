@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Image, ScrollView, SafeAreaView, TouchableOpacity, Platform, Linking } from 'react-native'
+import { View, Text, StyleSheet, Image, ScrollView, SafeAreaView, TouchableOpacity, Platform, Linking, Alert } from 'react-native'
 import React, { useState, useEffect, useContext } from 'react'
 import Colors from '../Shared/Colors';
 import Menu from '../Components/Menu';
@@ -20,6 +20,34 @@ export default function Dashboard() {
     const [agenda, setAgenda] = useState([]);
     const [lastActu, setLastActu] = useState([]);
     const [unreadMessages, setUnreadMessages] = useState([]);
+
+
+    const openAmHappy = async () => {
+        try {
+            // Détecter l'OS
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            const isAndroid = /android/i.test(userAgent);
+            const isIOS = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
+
+            let url;
+
+            if (isAndroid) {
+                // Android : Play Store (détecte auto si app installée)
+                url = 'https://play.google.com/store/apps/details?id=com.agencecolibri.amhappy';
+            } else if (isIOS) {
+                // iOS : App Store (détecte auto si app installée)
+                url = 'https://apps.apple.com/fr/app/amhappy/id6468228355';
+            } else {
+                // Desktop : site web
+                url = 'https://amhappy.fr';
+            }
+
+            await Linking.openURL(url);
+        } catch (error) {
+            console.error('Erreur ouverture AmHappy:', error);
+            Linking.openURL('https://amhappy.fr');
+        }
+    };
 
     useEffect(() => {
         // Charger les données depuis Strapi
@@ -152,7 +180,7 @@ export default function Dashboard() {
                                 <Text style={styles.eventSubtitle}>Configuration & Réglages</Text>
                             </TouchableOpacity>
                             <View style={styles.eventCard}>
-                                <TouchableOpacity onPress={() => Linking.openURL('https://amhappy.fr/')}>
+                                <TouchableOpacity onPress={openAmHappy}>
                                     <Image
                                         source={require('../Assets/images/logo-amhappy.png')}
                                         style={styles.amhappy}
