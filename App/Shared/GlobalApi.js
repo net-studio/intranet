@@ -11,7 +11,7 @@ const api = create({
 })
 
 const getLogin = (email) => api.get(`/collaborateurs?fields[0]=id&fields[1]=prenom&fields[2]=nom&fields[3]=telephone&fields[4]=email&fields[5]=password&fields[6]=documentId&populate[0]=photo&filters[email][$eq]=${email}`);
-const getCollaborateur = (p) => api.get(`/collaborateurs?populate=*&sort[0]=prenom&sort[1]=nom&pagination[page]=${p}&pagination[pageSize]=25`);
+const getCollaborateur = (p) => api.get(`/collaborateurs?populate=*&sort[0]=prenom&sort[1]=nom&filters[documentId][$ne]=ejj7ra6lycouw297dhbb34bb&pagination[page]=${p}&pagination[pageSize]=25`);
 const getAgences = (p) => api.get(`/agences?fields[0]=id&fields[1]=label&sort=label:ASC&pagination[page]=${p}&pagination[pageSize]=25`);
 const getActualites = (p) => api.get(`/events?populate=*&sort=position:ASC&pagination[page]=${p}&pagination[pageSize]=25`);
 const getAgenda = (p) => api.get(`/agendas?populate=*&sort=position:ASC&pagination[page]=${p}&pagination[pageSize]=25`);
@@ -46,6 +46,7 @@ const deleteNotification = (documentId) => api.delete(`/notifications/${document
 const getEvents = (userId) => api.get(`/events?filters[$or][0][participants][id][$in]=${userId}&filters[$or][1][isPublic][$eq]=true&sort[0]=startDate:asc&populate[organizer][fields][0]=*&populate[participants][fields][0]=*&populate[location][fields][0]=*`);
 const setEventResponse = (data) => api.post('/event-responses', data);
 const createEvent = (data) => api.post('/events', data);
+const setNewPass = (id, data) => api.put(`/collaborateurs/${id}`, data);
 
 export default {
   api,
@@ -77,4 +78,5 @@ export default {
   getEvents,
   setEventResponse,
   createEvent,
+  setNewPass
 }

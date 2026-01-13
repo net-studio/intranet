@@ -21,7 +21,8 @@ export default function WelcomeHeader() {
     }
 
     const onPressCollaborateur = () => {
-        navigation.navigate('Profile');
+        // navigation.navigate('Profile');
+        navigation.navigate('Settings');
     }
 
     useEffect(() => {
@@ -32,7 +33,7 @@ export default function WelcomeHeader() {
             <View style={styles.topnav}>
                 <TouchableOpacity onPress={() => onPressLogout()}>
                     <Ionicons name="power-sharp" size={24} color="black" />
-                    <Text style={styles.small}>v1.0.10</Text>
+                    <Text style={styles.small}>v1.0.11</Text>
                 </TouchableOpacity>
                 <View>
                     <Text>Hello,</Text>

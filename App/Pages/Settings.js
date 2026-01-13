@@ -38,6 +38,7 @@ const Settings = ({ navigation }) => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [passChanged, setPassChanged] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
@@ -168,7 +169,7 @@ const Settings = ({ navigation }) => {
     try {
       // Appelez votre API pour changer le mot de passe
       // Cette fonction n'est pas implémentée dans le service fourni, vous devrez l'ajouter
-      await authService.changePassword(currentPassword, newPassword);
+      await authService.changePassword(newPassword);
 
       // Fermer le modal et réinitialiser les champs
       setPasswordModalVisible(false);
@@ -176,7 +177,7 @@ const Settings = ({ navigation }) => {
       setNewPassword('');
       setConfirmPassword('');
 
-      Alert.alert('Succès', 'Votre mot de passe a été modifié avec succès.');
+      setPassChanged('Votre mot de passe a été modifié avec succès.');
     } catch (error) {
       console.error('Erreur lors du changement de mot de passe:', error);
 
@@ -358,7 +359,7 @@ const Settings = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
       >
         {/* Paramètres de notifications */}
-        <View style={styles.settingsCard}>
+        {/* <View style={styles.settingsCard}>
           <Text style={styles.sectionTitle}>Notifications</Text>
 
           <View style={styles.settingRow}>
@@ -386,10 +387,10 @@ const Settings = ({ navigation }) => {
               thumbColor={emailNotifications ? COLORS.primary : COLORS.gray}
             />
           </View>
-        </View>
+        </View> */}
 
         {/* Paramètres d'affichage */}
-        <View style={styles.settingsCard}>
+        {/* <View style={styles.settingsCard}>
           <Text style={styles.sectionTitle}>Affichage</Text>
 
           <View style={styles.settingRow}>
@@ -404,7 +405,7 @@ const Settings = ({ navigation }) => {
               thumbColor={darkModeEnabled ? COLORS.primary : COLORS.gray}
             />
           </View>
-        </View>
+        </View> */}
 
         {/* Paramètres de sécurité */}
         <View style={styles.settingsCard}>
@@ -420,10 +421,11 @@ const Settings = ({ navigation }) => {
             </View>
             <Icon name="chevron-forward" size={20} color={COLORS.textSecondary} />
           </TouchableOpacity>
+          <Text style={{ color: '#00bc2e' }}>{passChanged}</Text>
         </View>
 
         {/* Paramètres de l'application */}
-        <View style={styles.settingsCard}>
+        {/* <View style={styles.settingsCard}>
           <Text style={styles.sectionTitle}>Application</Text>
 
           <TouchableOpacity style={styles.settingButton}>
@@ -457,7 +459,7 @@ const Settings = ({ navigation }) => {
             </View>
             <Icon name="chevron-forward" size={20} color={COLORS.textSecondary} />
           </TouchableOpacity>
-        </View>
+        </View> */}
 
         {/* Actions de compte */}
         <View style={styles.settingsCard}>
@@ -473,7 +475,7 @@ const Settings = ({ navigation }) => {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={styles.settingButton}
             onPress={handleDeleteAccount}
           >
@@ -481,12 +483,12 @@ const Settings = ({ navigation }) => {
               <Icon name="trash-outline" size={22} color={COLORS.error} />
               <Text style={[styles.settingLabel, { color: COLORS.error }]}>Supprimer mon compte</Text>
             </View>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         {/* Version de l'application */}
         <View style={styles.versionContainer}>
-          <Text style={styles.versionText}>Version 1.0.0</Text>
+          <Text style={styles.versionText}>Version 1.0.11</Text>
         </View>
       </ScrollView>
 

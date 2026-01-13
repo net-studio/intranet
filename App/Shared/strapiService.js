@@ -1,6 +1,8 @@
 // src/api/strapiService.js
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { sha256 } from 'js-sha256';
+import GlobalApi from './GlobalApi';
 
 // Configuration de l'URL de base de l'API Strapi
 export const API_URL = 'https://robine-api.net-studio.fr';
@@ -83,6 +85,29 @@ export const authService = {
       return null;
     }
   },
+
+  changePassword: async (newpass) => {
+    const hash = await sha256(newpass);
+    const documentId = await AsyncStorage.getItem('documentId');
+    const passData = {
+      data: {
+        "password": hash
+      }
+    };
+    
+    try {
+      // const response = await api.put(`/api/collaborateurs/${documentId}`, {
+      //   data: {
+      //     "password": hash
+      //   },
+      // });
+      const response = await GlobalApi.setNewPass(documentId.replace(/"/g, ''), passData);
+      return response.data;
+    } catch (error) {
+      console.error('Erreur lors de l\'enregistrement du mot de passe:', error);
+      throw error;
+    }
+  }
 };
 
 // Service pour les notifications
